@@ -12,16 +12,27 @@ export class ToolkitError extends Error {
   }
 }
 
+// 管理器对下载途中遇到的 4xx/5xx 不给内部码，直接给状态短语，这里归一成传输码。
+// Managers report HTTP status phrases for failed downloads instead of internal codes.
+const HTTP_PHRASES = {
+  forbidden: "http-403",
+  unauthorized: "http-403",
+  "not found": "http-404",
+  "internal server error": "http-5xx",
+  "bad gateway": "http-5xx",
+  "service unavailable": "http-5xx",
+  "gateway timeout": "http-5xx",
+};
+
 // 管理器给出的码沿用原值，不自造同义词；提示文案按码查表。
 // Manager codes are kept verbatim; hints are looked up by code.
 export function managerError(info) {
   const messages = createMessages();
-  const code = typeof info === "string" ? info : String((info && (info.error || info.code)) || "error");
-  return new ToolkitError(
-    code,
-    format(messages.downloadFailed, { code }),
-    messages.managerHints[code] || messages.unknownManagerHint,
-  );
+  const raw = typeof info === "string" ? info : String((info && (info.error || info.code)) || "error");
+  const lowered = raw.toLowerCase();
+  const code = HTTP_PHRASES[lowered] || lowered;
+  const hint = messages.managerHints[code] || messages.transportHints[code] || messages.unknownManagerHint;
+  return new ToolkitError(code, format(messages.downloadFailed, { code }), hint);
 }
 
 export function transportError(status) {

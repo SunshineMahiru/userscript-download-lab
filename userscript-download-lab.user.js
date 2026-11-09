@@ -186,14 +186,22 @@
       this.hint = hint;
     }
   };
+  var HTTP_PHRASES = {
+    forbidden: "http-403",
+    unauthorized: "http-403",
+    "not found": "http-404",
+    "internal server error": "http-5xx",
+    "bad gateway": "http-5xx",
+    "service unavailable": "http-5xx",
+    "gateway timeout": "http-5xx"
+  };
   function managerError(info) {
     const messages2 = createMessages();
-    const code = typeof info === "string" ? info : String(info && (info.error || info.code) || "error");
-    return new ToolkitError(
-      code,
-      format(messages2.downloadFailed, { code }),
-      messages2.managerHints[code] || messages2.unknownManagerHint
-    );
+    const raw = typeof info === "string" ? info : String(info && (info.error || info.code) || "error");
+    const lowered = raw.toLowerCase();
+    const code = HTTP_PHRASES[lowered] || lowered;
+    const hint = messages2.managerHints[code] || messages2.transportHints[code] || messages2.unknownManagerHint;
+    return new ToolkitError(code, format(messages2.downloadFailed, { code }), hint);
   }
   function transportError(status) {
     const messages2 = createMessages();

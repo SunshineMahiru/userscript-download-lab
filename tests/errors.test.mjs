@@ -81,6 +81,30 @@ await check("管理器拒绝下载时保留原错误码", async () => {
   );
 });
 
+await check("管理器给出的状态短语归一为传输码", async () => {
+  // 真机观测：下载撞上 403 时 Tampermonkey 给的是 Forbidden，不是内部码。
+  // Observed on a real manager: a 403 during download surfaces as Forbidden.
+  const transport = createManagerTransport({
+    GM_xmlhttpRequest: () => {},
+    GM_download: (options) => options.onerror({ error: "Forbidden" }),
+  });
+  await assert.rejects(
+    () => transport.download({ url: "https://example.test/x", name: "a.pdf" }),
+    (error) => error.code === "http-403" && /拒绝访问/.test(error.hint),
+  );
+});
+
+await check("未知码给出可查的兜底提示", async () => {
+  const transport = createManagerTransport({
+    GM_xmlhttpRequest: () => {},
+    GM_download: (options) => options.onerror({ error: "something-new" }),
+  });
+  await assert.rejects(
+    () => transport.download({ url: "https://example.test/x", name: "a.pdf" }),
+    (error) => error.code === "something-new" && error.hint.length > 0,
+  );
+});
+
 const server = createFixtureServer();
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
