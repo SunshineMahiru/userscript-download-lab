@@ -1,0 +1,7 @@
+# Normalise line endings so the tracked artifact stays byte-stable.
+# 产物入库后由测试逐字节比对，换行必须与构建输出一致，不受 core.autocrlf 影响。
+* text=auto eol=lf
+
+# Binary fixtures must never be converted.
+*.png binary
+*.jpg binary
