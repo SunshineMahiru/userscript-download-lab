@@ -9,8 +9,6 @@
 // @grant        GM_download
 // @homepageURL  https://github.com/SunshineMahiru/userscript-download-lab
 // @supportURL   https://github.com/SunshineMahiru/userscript-download-lab/issues
-// @updateURL    https://cdn.jsdelivr.net/gh/SunshineMahiru/userscript-download-lab@v1.0.0/userscript-download-lab.user.js
-// @downloadURL  https://cdn.jsdelivr.net/gh/SunshineMahiru/userscript-download-lab@v1.0.0/userscript-download-lab.user.js
 // @require      https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js
 // ==/UserScript==
 (() => {
@@ -301,7 +299,9 @@
         listing: true,
         paging: true,
         status: true,
-        media: true,
+        // 合成站点把视频当直链返回，没有多码率或分片清单的解析需求。
+        // The fixture serves videos as direct files; there is no variant or playlist parsing.
+        media: false,
         series: true,
         authProbe: false
       },
@@ -445,6 +445,20 @@
   .udl-download:hover { background: #16895f; }
   .udl-section { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e9f5; }
 `;
+  function readStoredRatio() {
+    try {
+      const stored = Number.parseFloat(localStorage.getItem(STORAGE_KEY) || "");
+      return Number.isFinite(stored) ? stored : null;
+    } catch {
+      return null;
+    }
+  }
+  function writeStoredRatio(ratio) {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(ratio));
+    } catch {
+    }
+  }
   function mountPanel({ onParse, onDownload, onPdf }) {
     const root = document.createElement("aside");
     root.id = "udl-root";
@@ -534,12 +548,12 @@
       root.style.transform = "none";
       if (!persist) return;
       const span = range.maximum - range.minimum;
-      localStorage.setItem(STORAGE_KEY, String(span === 0 ? 0 : (safe - range.minimum) / span));
+      writeStoredRatio(span === 0 ? 0 : (safe - range.minimum) / span);
     }
     function restoreTop() {
       const range = tabRange();
-      const stored = Number.parseFloat(localStorage.getItem(STORAGE_KEY) || "");
-      const ratio = Number.isFinite(stored) ? clamp(stored, 0, 1) : 0.5;
+      const stored = readStoredRatio();
+      const ratio = stored === null ? 0.5 : clamp(stored, 0, 1);
       setTop(range.minimum + (range.maximum - range.minimum) * ratio, false);
     }
     function bindDrag() {

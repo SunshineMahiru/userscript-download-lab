@@ -58,15 +58,16 @@ check("元数据块只出现一次", () => {
 check("元数据声明了匹配范围、仓库地址与依赖", () => {
   assert.match(text, /\/\/ @match\s+http:\/\/127\.0\.0\.1:8080\/\*/);
   assert.match(text, /\/\/ @namespace\s+https:\/\/github\.com\/SunshineMahiru\/userscript-download-lab/);
-  assert.match(text, /\/\/ @updateURL\s+https:\/\/cdn\.jsdelivr\.net\/gh\/SunshineMahiru\/userscript-download-lab@v1\.0\.0\//);
-  assert.match(text, /\/\/ @downloadURL\s+https:\/\/cdn\.jsdelivr\.net\/gh\/SunshineMahiru\/userscript-download-lab@v1\.0\.0\//);
+  assert.match(text, /\/\/ @homepageURL\s+https:\/\/github\.com\/SunshineMahiru\/userscript-download-lab/);
+  assert.match(text, /\/\/ @supportURL\s+https:\/\/github\.com\/SunshineMahiru\/userscript-download-lab\/issues/);
   assert.match(text, /\/\/ @require\s+https:\/\/cdn\.jsdelivr\.net\/npm\/jspdf@4\.2\.1\//);
 });
 
-check("更新地址与下载地址一致", () => {
-  const update = text.match(/\/\/ @updateURL\s+(\S+)/)[1];
-  const download = text.match(/\/\/ @downloadURL\s+(\S+)/)[1];
-  assert.equal(update, download, "两者应指向同一个产物");
+check("不声明更新地址", () => {
+  // 没有分发渠道时更新检查没有对象，声明它只会挂一个取不到文件的地址。
+  // Without a distribution channel an update URL has nothing to poll.
+  assert.doesNotMatch(text, /@updateURL/);
+  assert.doesNotMatch(text, /@downloadURL/);
 });
 
 check("产物不含平台字样", () => {

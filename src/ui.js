@@ -49,6 +49,28 @@ const STYLE = `
   .udl-section { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e9f5; }
 `;
 
+// 隐私模式或第三方上下文会拒绝存储访问。存储不可用时退化为默认位置与不记忆，
+// 而不是让挂载抛错。
+// Private modes and third-party contexts can deny storage access. Degrade to a default
+// position instead of letting the mount throw.
+function readStoredRatio() {
+  try {
+    const stored = Number.parseFloat(localStorage.getItem(STORAGE_KEY) || "");
+    return Number.isFinite(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredRatio(ratio) {
+  try {
+    localStorage.setItem(STORAGE_KEY, String(ratio));
+  } catch {
+    // 写不进去只影响下次挂载的位置，不影响本次拖拽。
+    // A failed write only costs the next mount its position; the drag still works.
+  }
+}
+
 export function mountPanel({ onParse, onDownload, onPdf }) {
   const root = document.createElement("aside");
   root.id = "udl-root";
@@ -150,13 +172,13 @@ export function mountPanel({ onParse, onDownload, onPdf }) {
     root.style.transform = "none";
     if (!persist) return;
     const span = range.maximum - range.minimum;
-    localStorage.setItem(STORAGE_KEY, String(span === 0 ? 0 : (safe - range.minimum) / span));
+    writeStoredRatio(span === 0 ? 0 : (safe - range.minimum) / span);
   }
 
   function restoreTop() {
     const range = tabRange();
-    const stored = Number.parseFloat(localStorage.getItem(STORAGE_KEY) || "");
-    const ratio = Number.isFinite(stored) ? clamp(stored, 0, 1) : 0.5;
+    const stored = readStoredRatio();
+    const ratio = stored === null ? 0.5 : clamp(stored, 0, 1);
     setTop(range.minimum + (range.maximum - range.minimum) * ratio, false);
   }
 

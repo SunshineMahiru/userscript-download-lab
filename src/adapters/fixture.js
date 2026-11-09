@@ -26,7 +26,9 @@ export function createFixtureAdapter({ origin }) {
       listing: true,
       paging: true,
       status: true,
-      media: true,
+      // 合成站点把视频当直链返回，没有多码率或分片清单的解析需求。
+      // The fixture serves videos as direct files; there is no variant or playlist parsing.
+      media: false,
       series: true,
       authProbe: false,
     },
