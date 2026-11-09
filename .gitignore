@@ -1,0 +1,24 @@
+# Installed dependencies, restored with `npm install`
+node_modules/
+
+# Build output, produced by `npm run build`
+dist/
+
+# Agent working notes and project instructions, kept local only
+AGENTS.md
+
+# Internal planning notes, kept local only
+docs/PROJECT.md
+docs/repositioning.md
+
+# Legacy implementation kept for reference during migration
+.legacy/
+
+# Editor and operating system noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Runtime logs
+*.log
