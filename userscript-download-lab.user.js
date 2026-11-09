@@ -7,6 +7,7 @@
 // @run-at       document-idle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_download
+// @connect      127.0.0.1
 // @homepageURL  https://github.com/SunshineMahiru/userscript-download-lab
 // @supportURL   https://github.com/SunshineMahiru/userscript-download-lab/issues
 // @require      https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js

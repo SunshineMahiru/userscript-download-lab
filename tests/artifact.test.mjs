@@ -68,6 +68,13 @@ check("元数据声明了匹配范围、仓库地址与依赖", () => {
   assert.match(text, /\/\/ @require\s+https:\/\/cdn\.jsdelivr\.net\/npm\/jspdf@4\.2\.1\//);
 });
 
+check("下载域名已列入 @connect", () => {
+  // 同源的 GM_xmlhttpRequest 不受 @connect 约束，GM_download 却会校验，
+  // 少这一行下载会以 not_whitelisted 失败，而解析阶段看不出问题。
+  // Same-origin GM_xmlhttpRequest ignores @connect, but GM_download enforces it.
+  assert.match(text, /\/\/ @connect\s+127\.0\.0\.1\s*$/m);
+});
+
 check("不声明更新地址", () => {
   // 没有分发渠道时更新检查没有对象，声明它只会挂一个取不到文件的地址。
   // Without a distribution channel an update URL has nothing to poll.
