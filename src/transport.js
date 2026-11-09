@@ -3,10 +3,19 @@
 
 import { ToolkitError, managerError } from "./errors.js";
 
-export function createManagerTransport(scope) {
-  const xmlhttpRequest = scope.GM_xmlhttpRequest;
-  const managerDownload = scope.GM_download;
-  const registerMenuCommand = scope.GM_registerMenuCommand;
+// 脚本管理器把接口注入脚本作用域，不一定挂在页面 window 上，因此默认从 globalThis 取，
+// 同时接受显式传入的作用域，便于测试替换。
+// Managers inject these into the script scope rather than the page window, so default to
+// globalThis and still accept an explicit scope for tests.
+function resolveApi(scope, name) {
+  if (scope && typeof scope[name] === "function") return scope[name];
+  return undefined;
+}
+
+export function createManagerTransport(scope = globalThis) {
+  const xmlhttpRequest = resolveApi(scope, "GM_xmlhttpRequest");
+  const managerDownload = resolveApi(scope, "GM_download");
+  const registerMenuCommand = resolveApi(scope, "GM_registerMenuCommand");
 
   // 缺少请求能力时立刻抛出，不做退让。
   // Fail at once when the manager lacks request capability.

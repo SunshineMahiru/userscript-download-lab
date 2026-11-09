@@ -59,30 +59,58 @@ export function createEngine({ adapter, transport }) {
     return { resource, spec };
   }
 
-  async function exportChapter(context) {
+  // 取址与下载分开：界面可以先列出结果，用户挑选后再下载。
+  // Resolution and download are separate so the panel can list first and fetch later.
+  async function resolveAll(context) {
     const chapter = await readChapter(context);
     const refs = await listRefs(chapter);
+    const items = [];
     const failures = [];
-    let saved = 0;
 
     for (const ref of refs) {
-      // 单条资源失败不中断整批，失败原因按条记录并回报，不隐藏。
-      // One failing item does not abort the batch; each reason is recorded and reported.
       try {
         const { resource, spec } = await resolveRef(chapter, ref);
         const kind = resource.kind || inferKind(ref.name, resource.url, ref.type);
-        const name = sanitizeFileName(resource.name || ref.name, resource.url, kind);
-        // 下载沿用状态请求的请求头，同一资源的请求上下文保持一致。
-        // Reuse the status request headers so one resource keeps one request context.
-        await transport.download({ url: resource.url, name, headers: spec.headers || {} });
-        saved += 1;
+        items.push({
+          ...resource,
+          kind,
+          name: sanitizeFileName(resource.name || ref.name, resource.url, kind),
+          // 下载沿用取址时的请求头，保持同一资源的请求上下文。
+          // Keep the headers used during resolution so one resource keeps one context.
+          headers: spec.headers || {},
+        });
       } catch (error) {
         failures.push({ name: ref.name, code: error.code || "error", hint: error.hint || "" });
+      }
+    }
+
+    return { chapter, items, failures };
+  }
+
+  async function downloadAll(items, { onItem } = {}) {
+    const failures = [];
+    let saved = 0;
+
+    for (const [index, item] of items.entries()) {
+      if (onItem) onItem({ index, total: items.length, name: item.name });
+      // 单条失败不中断整批，原因按条记录并回报。
+      // One failing item does not abort the batch; each reason is recorded.
+      try {
+        await transport.download({ url: item.url, name: item.name, headers: item.headers || {} });
+        saved += 1;
+      } catch (error) {
+        failures.push({ name: item.name, code: error.code || "error", hint: error.hint || "" });
       }
     }
 
     return { saved, failed: failures };
   }
 
-  return { readChapter, listRefs, resolveRef, exportChapter };
+  async function exportChapter(context, options) {
+    const { items, failures } = await resolveAll(context);
+    const outcome = await downloadAll(items, options);
+    return { saved: outcome.saved, failed: [...failures, ...outcome.failed] };
+  }
+
+  return { readChapter, listRefs, resolveRef, resolveAll, downloadAll, exportChapter };
 }

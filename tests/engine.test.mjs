@@ -80,6 +80,31 @@ try {
     assert.ok(downloads.every((item) => item.url.includes("/media/")));
   });
 
+  await check("取址结果已规整文件名并带上请求头", async () => {
+    const transport = createNodeTransport();
+    const engine = createEngine({ adapter, transport });
+    const { items, failures } = await engine.resolveAll(await loadContext("ch-1"));
+    assert.equal(items.length, 5);
+    assert.equal(failures.length, 0);
+    assert.ok(items.every((item) => item.name.length > 0), "每条都应有文件名");
+    assert.ok(items.every((item) => item.headers && item.headers.Referer), "每条都应带上请求头");
+    assert.ok(items.some((item) => item.name.endsWith(".pdf")));
+    assert.ok(items.some((item) => item.kind === "video"));
+  });
+
+  await check("下载只处理给定条目并逐条回报进度", async () => {
+    const transport = createNodeTransport();
+    const engine = createEngine({ adapter, transport });
+    const { items } = await engine.resolveAll(await loadContext("ch-1"));
+    const picked = items.filter((item) => item.kind === "video");
+    const progress = [];
+    const outcome = await engine.downloadAll(picked, { onItem: (step) => progress.push(step) });
+    assert.equal(outcome.saved, picked.length);
+    assert.equal(outcome.failed.length, 0);
+    assert.equal(progress.length, picked.length, "每条都应回报一次进度");
+    assert.equal(progress[0].total, picked.length);
+  });
+
   await check("缺少必需能力时构造引擎即报错", () => {
     const broken = { ...adapter, capabilities: { ...adapter.capabilities, status: false } };
     assert.throws(() => createEngine({ adapter: broken, transport: createNodeTransport() }), /必需能力/);

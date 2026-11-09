@@ -45,7 +45,7 @@ export function boot() {
   if (window.top !== window.self) return;
 
   const adapter = createFixtureAdapter({ origin: FIXTURE_ORIGIN });
-  const transport = createManagerTransport(window);
+  const transport = createManagerTransport();
   const engine = createEngine({ adapter, transport });
 
   let resources = [];
@@ -57,23 +57,14 @@ export function boot() {
         setBusy(true);
         panel.setStatus("正在读取本章资源…");
         try {
-          const chapter = await engine.readChapter(collectContext());
-          const refs = await engine.listRefs(chapter);
-          const resolved = [];
-          for (const ref of refs) {
-            const { resource, spec } = await engine.resolveRef(chapter, ref);
-            resolved.push({
-              ...resource,
-              name: sanitizeFileName(resource.name || ref.name, resource.url, resource.kind),
-              // 下载沿用取址时的请求头，保持一致。
-              // Keep the headers used during resolution so the download matches.
-              headers: spec.headers || {},
-              selected: true,
-            });
-          }
-          resources = resolved;
+          const { items, failures } = await engine.resolveAll(collectContext());
+          resources = items.map((item) => ({ ...item, selected: true }));
           panel.setResources(resources);
-          panel.setStatus(`已解析 ${resources.length} 项资源。`, "success");
+          if (failures.length) {
+            panel.setStatus(`已解析 ${items.length} 项，${failures.length} 项不可用。`, "warning");
+          } else {
+            panel.setStatus(`已解析 ${items.length} 项资源。`, "success");
+          }
         } finally {
           setBusy(false);
         }
@@ -85,24 +76,19 @@ export function boot() {
         if (!selected.length) return;
         panel.setBusy(true);
         panel.setStatus(`正在下载 ${selected.length} 项…`);
-        const failures = [];
         try {
-          for (const item of selected) {
-            try {
-              await transport.download({ url: item.url, name: item.name, headers: item.headers || {} });
-            } catch (error) {
-              failures.push({ name: item.name, message: error.message, hint: error.hint || "" });
-            }
+          const outcome = await engine.downloadAll(selected, {
+            onItem: ({ index, total, name }) => panel.setStatus(`正在下载 ${index + 1}/${total}：${name}`),
+          });
+          if (!outcome.failed.length) {
+            panel.setStatus(`已提交 ${outcome.saved} 个文件到浏览器下载。`, "success");
+            return;
           }
+          const first = outcome.failed[0];
+          panel.setStatus(`${outcome.failed.length} 项失败，首个原因：${first.code} ${first.hint}`, "warning");
         } finally {
           panel.setBusy(false);
         }
-        if (!failures.length) {
-          panel.setStatus(`已提交 ${selected.length} 个文件到浏览器下载。`, "success");
-          return;
-        }
-        const first = failures[0];
-        panel.setStatus(`${failures.length} 项失败，首个原因：${first.message} ${first.hint}`, "warning");
       });
     },
 
@@ -127,7 +113,7 @@ export function boot() {
           }
           panel.setStatus("正在写入 PDF…");
           const pdfBlob = buildPdf(jsPdfNamespace(), pages);
-          saveBlob(pdfBlob, `${document.title || "章节"}.pdf`);
+          saveBlob(pdfBlob, sanitizeFileName(document.title || "章节", "", "pdf"));
           panel.setStatus(`已保存 ${total} 页，约 ${(pdfBlob.size / 1048576).toFixed(1)} MB。`, "success");
         } finally {
           panel.setPdfBusy(false);
