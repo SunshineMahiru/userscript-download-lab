@@ -4,10 +4,12 @@ import { JSDOM } from "jsdom";
 import { ARTIFACT } from "../tools/build.mjs";
 import { createFixtureServer } from "../tools/serve.mjs";
 
-// 其余测试跑的是源码，用户装的却是打包产物。这一条直接执行构建好的文件，
-// 拦的是「打包后与源码行为不一致」这类只在产物上出现的问题。
-// Other tests run the sources; users install the bundle. This one executes the built
-// file, catching problems that only exist after bundling.
+// 其余测试跑的是源码，用户装的却是打包产物；而管理器又把 GM_* 注入脚本作用域，
+// 既不挂 window 也不挂 globalThis。这一条按同样的方式执行产物：GM_* 只作为函数参数
+// 传进去，全局对象上没有它们。脚本若按 window 或 globalThis 取接口，这里就会失败。
+// Other tests run the sources; users install the bundle. Managers also inject GM_* into
+// the script scope only — not on window or globalThis. This test runs the bundle the same
+// way: GM_* arrive as parameters and nowhere else.
 
 const bundle = readFileSync(ARTIFACT, "utf8");
 const server = createFixtureServer();
@@ -42,9 +44,10 @@ const chapterHtml = await fetch(`${origin}/chapter/ch-1`).then((response) => res
 const dom = new JSDOM(chapterHtml, { url: `${origin}/chapter/ch-1`, runScripts: "outside-only", pretendToBeVisual: true });
 const { window } = dom;
 Object.defineProperty(window.navigator, "language", { value: "zh-CN", configurable: true });
+Object.defineProperty(globalThis, "navigator", { value: window.navigator, configurable: true });
 
 const downloads = [];
-window.GM_xmlhttpRequest = ({ url, method = "GET", headers, responseType, onload, onerror }) => {
+const GM_xmlhttpRequest = ({ url, method = "GET", headers, responseType, onload, onerror }) => {
   fetch(url, { method, headers })
     .then(async (response) => {
       const text = await response.text();
@@ -60,14 +63,20 @@ window.GM_xmlhttpRequest = ({ url, method = "GET", headers, responseType, onload
     })
     .catch((error) => onerror(error));
 };
-window.GM_download = (spec) => {
+const GM_download = (spec) => {
   downloads.push({ name: spec.name, url: spec.url });
   spec.onload();
 };
 
+// 只通过参数注入，不污染 window 与 globalThis。
+// Injected as parameters only; window and globalThis stay clean.
+const runInSandbox = new Function("GM_xmlhttpRequest", "GM_download", "window", "document", "location", bundle);
+
 try {
-  await check("产物可直接执行并挂载面板", () => {
-    window.eval(bundle);
+  await check("沙箱作用域下产物能取到接口并挂载面板", () => {
+    assert.equal(window.GM_xmlhttpRequest, undefined, "window 上不应有接口");
+    assert.equal(globalThis.GM_download, undefined, "globalThis 上不应有接口");
+    runInSandbox(GM_xmlhttpRequest, GM_download, window, window.document, window.location);
     const root = window.document.querySelector("#udl-root");
     assert.ok(root, "打包产物没有创建面板");
     assert.equal(root.querySelector("#udl-count").textContent, "0 项");
@@ -95,8 +104,6 @@ try {
   await check("产物自包含且不引用 node 内置模块", () => {
     // esbuild 会在模块交界处留下 `// src/xxx.js` 的注释，那只是面包屑，
     // 不是运行时引用，因此这里检查的是真的 import 与 node: 前缀。
-    // esbuild leaves `// src/xxx.js` breadcrumbs; they are comments, not references,
-    // so the check targets real import statements and the node: prefix.
     assert.ok(!/\bfrom\s+["']node:/.test(bundle), "产物不应从 node 内置模块导入");
     assert.ok(!/\brequire\(["']node:/.test(bundle), "产物不应请求 node 内置模块");
     assert.ok(!/(^|\n)\s*import\s+[^(]/.test(bundle), "产物不应留下未打包的 import 语句");

@@ -4,13 +4,20 @@
 import { ToolkitError, managerError } from "./errors.js";
 import { createMessages } from "./messages.js";
 
-// 脚本管理器把接口注入脚本作用域，不一定挂在页面 window 上，因此默认从 globalThis 取，
-// 同时接受显式传入的作用域，便于测试替换。
-// Managers inject these into the script scope rather than the page window, so default to
-// globalThis and still accept an explicit scope for tests.
+// 脚本管理器把接口注入脚本作用域：既不在 window 上，也不在 globalThis 上，
+// 只有直接引用标识符才取得到。scope 供测试注入，标识符才是真实沙箱里的落点。
+// Managers inject these into the script scope — neither on window nor on globalThis.
+// Only a direct identifier reference reaches them; scope exists for tests.
+const SANDBOX_APIS = {
+  GM_xmlhttpRequest: () => (typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : undefined),
+  GM_download: () => (typeof GM_download === "function" ? GM_download : undefined),
+};
+
 function resolveApi(scope, name) {
   if (scope && typeof scope[name] === "function") return scope[name];
-  return undefined;
+  if (typeof globalThis[name] === "function") return globalThis[name];
+  const fromSandbox = SANDBOX_APIS[name];
+  return fromSandbox ? fromSandbox() : undefined;
 }
 
 export function createManagerTransport(scope = globalThis) {

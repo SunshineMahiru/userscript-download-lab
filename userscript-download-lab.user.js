@@ -511,9 +511,15 @@
   }
 
   // src/transport.js
+  var SANDBOX_APIS = {
+    GM_xmlhttpRequest: () => typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : void 0,
+    GM_download: () => typeof GM_download === "function" ? GM_download : void 0
+  };
   function resolveApi(scope, name) {
     if (scope && typeof scope[name] === "function") return scope[name];
-    return void 0;
+    if (typeof globalThis[name] === "function") return globalThis[name];
+    const fromSandbox = SANDBOX_APIS[name];
+    return fromSandbox ? fromSandbox() : void 0;
   }
   function createManagerTransport(scope = globalThis) {
     const messages2 = createMessages();
