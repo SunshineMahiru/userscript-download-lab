@@ -1,0 +1,127 @@
+<h1 align="center">userscript-download-lab</h1>
+
+<p align="center">一个用户脚本工程实验：适配器接口、与站点无关的下载引擎，以及一个用来跑实验的合成课程站点。</p>
+
+<p align="center">
+  <a href="README.zh-CN.md">简体中文</a> · <a href="README.md">English</a>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+</p>
+
+## 这是什么
+
+一个用户脚本，把章节里的文档、视频、幻灯片图片序列解析出来，交给脚本管理器去下载。它关于某个站点的全部知识都放在一个小适配器里，引擎自己不知道站点长什么样。
+
+仓库只带一个适配器，而且只匹配 `http://127.0.0.1:8080/*`，也就是 `fixtures/` 里那个合成站点。没有任何真实平台的适配器。引擎对「找不到适配器」是当正常情况处理的，不抛错。
+
+重点在工程，不在工具。一份写清楚的接口定义、一套夹具驱动的测试、六篇能复跑出数字的实验记录，这三样是仓库的主要内容。
+
+## 这不是什么
+
+- 不连任何真实课程平台。仓库里没有出现任何真实站点的域名、接口、字段名或会话细节。
+- 不解密、不合并分片、不绕访问控制。这些能力在接口里根本没留位置，不是留了没用。
+- 不是下载管理器。一次处理一个章节，只取当前会话本来就能看到的东西。
+
+## 几个具体的地方
+
+- 适配器接口一共八个成员，参考实现只做了六个，剩下两个是空位，接口文档里写着，代码里没有。
+- 传输层可注入。线上包住 `GM_xmlhttpRequest` 与 `GM_download`，测试里换成 `node:http`，请求真的打到本地服务器。没有为了让测试变绿而伪造行为。
+- 63 条断言分在七个测试文件里，覆盖文件名规则、合成站点、引擎、页数探测、面板、入口装配，以及产物。
+- 页数用指数加二分探测。1500 页的序列花 20 次请求，线性扫描要 1500 次。
+- `docs/experiments/` 下有六篇记录，每篇都写明了复跑命令和跑出来的数字。
+
+## 结构
+
+```text
+┌──────────────────────────────┐
+│  script manager (GM_*)       │
+└──────────────┬───────────────┘
+               │ host API
+┌──────────────▼───────────────┐
+│  panel · engine · adapter    │
+└──────────────┬───────────────┘
+               │ HTTP
+┌──────────────▼───────────────┐
+│  fixture site (serve.mjs)    │
+└──────────────────────────────┘
+```
+
+引擎通过一个传输对象跟脚本管理器说话，通过适配器跟站点说话。适配器不发请求，也不碰 DOM，它只做两件事：把页面上下文变成地址，把响应变成资源记录。
+
+合成站点是个普通的 `node:http` 服务，响应内容全部来自 `fixtures/site/*.json`，代码里没有业务数据。
+
+## 上手
+
+```bash
+git clone git@github.com:SunshineMahiru/userscript-download-lab.git
+cd userscript-download-lab
+npm ci
+npm run serve          # 合成站点跑在 http://127.0.0.1:8080
+npm run build          # 产出 userscript-download-lab.user.js
+```
+
+在脚本管理器里装上 `userscript-download-lab.user.js`，打开 `http://127.0.0.1:8080/chapter/ch-1`。左侧会出现一个面板，点解析会列出五项资源，勾选后能下载，也能把幻灯片序列合成一份 PDF。
+
+`serve` 和 `build` 开两个终端跑。脚本只匹配 8080 端口，合成站点必须在这个端口上。
+
+## 适配器接口
+
+六个函数加一个能力声明。完整定义和数据结构在 [`docs/architecture.md`](docs/architecture.md)。
+
+| 成员 | 职责 |
+| --- | --- |
+| `readChapter(context)` | 认出章节，不是章节页就返回 `null` |
+| `listingRequest(chapter, cursor)` | 拼列表页的请求 |
+| `parseListing(text, cursor)` | 把列表响应分成引用与下一页游标 |
+| `statusRequest(chapter, ref)` | 拼单条资源的状态请求 |
+| `parseStatus(payload, ref)` | 取出最终地址，取不到返回 `null` |
+| `readSeries(context)` | 认出幻灯片序列，可选 |
+
+接口文档里还有两个可选成员 `parseMedia` 和 `probeAuth`。参考实现没做，引擎也不调，它们只是预留位置。
+
+## 测试
+
+`npm test` 一条命令跑完七个文件。
+
+| 文件 | 断言 | 覆盖 |
+| --- | --- | --- |
+| `filename.test.mjs` | 9 | 后缀判定、Windows 保留名、按字节截断 |
+| `server.test.mjs` | 12 | 站点路由、302 签名、过期、页数越界 |
+| `engine.test.mjs` | 9 | 分页、取址、批量下载、能力校验 |
+| `slides.test.mjs` | 7 | 地址拼接、探测次数、PDF 页面尺寸 |
+| `panel.test.mjs` | 13 | 渲染、转义、勾选状态、拖拽与位置记忆 |
+| `boot.test.mjs` | 5 | 入口装配，注入宿主接口后跑通整条链 |
+| `artifact.test.mjs` | 8 | 元数据块、与源码逐字节同步、禁用词 |
+
+产物那条测试会重新构建一次，再跟仓库里的文件逐字节比对。改了源码忘记重建，测试直接失败。
+
+## 实验记录
+
+| 篇目 | 结果 |
+| --- | --- |
+| `01-page-counting.md` | 1500 页 20 次探测，线性要 1500 次 |
+| `02-pdf-page-geometry.md` | 固定 960 pt 宽，`/MediaBox` 实测 960×720 与 960×1920 |
+| `03-filename-boundaries.md` | 保留名、结尾点、168 字节上限，比文件系统上限留出余量 |
+| `04-error-code-taxonomy.md` | 四类错误来源，约四分之一被测试触发，其余逐条列出未覆盖 |
+| `05-signed-url-redirect.md` | 302 进签名地址，篡改与过期返回不同的 403 响应体 |
+| `06-cursor-pagination.md` | 五项引用用两次请求，请求次数也进断言 |
+
+每篇的数据都来自合成站点或本地计算，记录里写明了来源。
+
+## 目录
+
+```text
+src/          引擎、适配器、面板、幻灯片、传输层、入口
+fixtures/     合成站点的数据与幻灯片图片
+tools/        站点服务器、打包脚本、测试用传输层
+tests/        七个测试文件与共享的 jsdom 辅助
+docs/         接口文档、决策记录、实验记录
+```
+
+`docs/PROJECT.md` 与 `docs/repositioning.md` 是工作笔记，不进仓库。
+
+## 许可证
+
+MIT，见 [LICENSE](LICENSE)。
