@@ -14,7 +14,7 @@
 
 A userscript that resolves chapter resources — documents, videos, slide image sequences — and hands them to the script manager's downloader. Everything it knows about a site lives in a small adapter; the engine itself has no site knowledge.
 
-The repository ships one adapter, and it only matches `http://127.0.0.1:8080/*`, which is the synthetic site included in `fixtures/`. There is no adapter for any real platform here, and the engine is written so that a missing adapter is a normal state rather than a crash.
+The repository ships one adapter, and it only matches `http://127.0.0.1:8080/*`, which is the synthetic site included in `fixtures/`. There is no adapter for any real platform here. When no adapter is supplied, the engine refuses to start with a message saying so rather than failing silently.
 
 The point is the engineering, not the tool: a documented interface, a fixture-driven test suite, and six written-up experiments with numbers you can reproduce.
 
@@ -52,15 +52,19 @@ The engine talks to the manager through a transport object and to the site throu
 
 ## Quick Start
 
+Requires Node 20 or newer; `jsdom` and the global `fetch` used by the tests both need it.
+
 ```bash
 git clone git@github.com:SunshineMahiru/userscript-download-lab.git
 cd userscript-download-lab
 npm ci
 npm run serve          # serves the synthetic site on http://127.0.0.1:8080
-npm run build          # writes userscript-download-lab.user.js
+npm run build          # regenerates userscript-download-lab.user.js
 ```
 
-Install `userscript-download-lab.user.js` in a userscript manager, then open `http://127.0.0.1:8080/chapter/ch-1`. A panel appears on the left edge: parse the chapter to list five resources, select the ones you want, download them, or compose the slide sequence into a PDF.
+The repository already contains a built `userscript-download-lab.user.js`, so `npm run build` is only needed after changing `src/`.
+
+Install that file in a manager that provides `GM_xmlhttpRequest` and `GM_download` — Tampermonkey, ScriptCat and Violentmonkey all do — then open `http://127.0.0.1:8080/chapter/ch-1`. A panel appears on the left edge: parse the chapter to list five resources, select the ones you want, download them, or compose the slide sequence into a PDF.
 
 `npm run serve` and `npm run build` run in separate shells; the script only matches port 8080, so the fixture server must be on that port.
 
@@ -103,7 +107,7 @@ The artifact test rebuilds the bundle and compares it byte for byte with the tra
 | `01-page-counting.md` | 1500 pages: 20 probes instead of 1500 |
 | `02-pdf-page-geometry.md` | Fixed 960 pt width; `/MediaBox` verified as 960×720 and 960×1920 |
 | `03-filename-boundaries.md` | Reserved names, trailing dots, 168-byte limit below the filesystem ceiling |
-| `04-error-code-taxonomy.md` | Four error sources; roughly a quarter of the codes exercised by tests, and the rest listed as untested |
+| `04-error-code-taxonomy.md` | Four error sources; fourteen codes exercised by tests, the rest listed with reasons |
 | `05-signed-url-redirect.md` | 302 into a signed address; tampered and expired signatures return distinct 403 bodies |
 | `06-cursor-pagination.md` | Five refs in two requests, request count asserted rather than assumed |
 
@@ -112,7 +116,7 @@ Data in every record comes from the fixture site or from local computation, and 
 ## Project layout
 
 ```text
-src/          engine, adapter, panel, slides, transport, entry
+src/          engine, adapter, panel, slides, transport, filename, errors, request, json, meta, entry
 fixtures/     synthetic site data and slide images
 tools/        fixture server, bundler, node transport
 tests/        eight test files plus shared jsdom helpers

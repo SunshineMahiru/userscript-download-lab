@@ -28,22 +28,28 @@
 | 类别 | 码 | 触发场景 | 测试位置 |
 | --- | --- | --- | --- |
 | 传输 | `http-403` | 签名过期的资源 | `tests/engine.test.mjs` |
+| 传输 | `http-404` | 状态码归一 | `tests/errors.test.mjs` |
+| 传输 | `http-5xx` | 500 与 502 都归为同一码 | `tests/errors.test.mjs` |
+| 传输 | `http-418` | 未归类的状态码保留原值 | `tests/errors.test.mjs` |
+| 传输 | `timeout` | 管理器的 `ontimeout` 回调 | `tests/errors.test.mjs` |
+| 传输 | `network` | 管理器的 `onerror` 回调 | `tests/errors.test.mjs` |
 | 内容 | `empty` | 序列前缀不存在；PDF 无页面 | `tests/slides.test.mjs` |
+| 内容 | `not-a-file` | 状态有返回但没有可下载地址 | `tests/errors.test.mjs` |
 | 适配器 | `chapter-not-found` | 页面没有内联数据 | `tests/engine.test.mjs` |
-| 适配器 | `capability-missing` | 适配器声明 `status: false` | `tests/engine.test.mjs` |
+| 适配器 | `capability-missing` | 适配器声明 `listing: false` | `tests/errors.test.mjs` |
+| 适配器 | `transport-missing` | 管理器没有提供请求接口 | `tests/errors.test.mjs` |
+| 管理器 | `not_enabled` | 管理器没有提供下载接口 | `tests/errors.test.mjs` |
+| 管理器 | `not_permitted` | 管理器拒绝下载，原码透传 | `tests/errors.test.mjs` |
+| 管理器 | `not_supported` | 管理器不支持该资源类型 | `tests/boot.test.mjs` |
 
 未被测试触发的码：
 
 | 类别 | 码 | 未触发原因 |
 | --- | --- | --- |
-| 管理器 | `not_permitted`、`not_enabled` | 需要真实脚本管理器的下载接口，本机无法构造 |
-| 管理器 | `not_whitelisted` | 同上，属于管理器的域名校验 |
-| 管理器 | `not_supported` | 同上，由管理器判断资源类型 |
-| 传输 | `timeout`、`network` | 合成站点不制造超时与断连 |
-| 传输 | `http-404`、`http-5xx` | 合成站点只用 403 与 404 两处，未覆盖 5xx |
-| 内容 | `parse-failed` | 当前实现不会走到这个分支 |
+| 适配器 | `adapter-missing` | 需要构造一个不传适配器的引擎，当前没有这条用例 |
+| 管理器 | `not_whitelisted`、`not_found`、`forbidden`、`not_succeeded` | 只是映射表里的条目，本实现不产生这些码 |
 
-被测试覆盖的四类码占总数的四分之一左右。这个比例是刻意不掩饰的：管理器类的行为只能在真实管理器里复现，伪造一个「管理器返回 not_permitted」的对象，验的是映射函数，不是管理器的真实行为。
+十四种码已被实际触发，剩下的或需要真实管理器才能复现，或根本不由本实现产生。管理器码保持原值的做法在测试里也验了：`not_permitted` 从管理器传出后，引擎记录的就是原码，不是改写过的新码。
 
 ## 结论
 
@@ -53,4 +59,4 @@
 
 ## 局限
 
-错误提示的语言只有中文，没有做本地化。合成站点不模拟慢响应，超时路径只有代码没有数据。
+错误提示的语言只有中文，没有做本地化。超时只在管理器回调这一层验证过：测试直接触发 `ontimeout`，没有真实慢响应的数据。

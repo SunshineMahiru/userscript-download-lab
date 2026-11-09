@@ -14,7 +14,7 @@
 
 一个用户脚本，把章节里的文档、视频、幻灯片图片序列解析出来，交给脚本管理器去下载。它关于某个站点的全部知识都放在一个小适配器里，引擎自己不知道站点长什么样。
 
-仓库只带一个适配器，而且只匹配 `http://127.0.0.1:8080/*`，也就是 `fixtures/` 里那个合成站点。没有任何真实平台的适配器。引擎对「找不到适配器」是当正常情况处理的，不抛错。
+仓库只带一个适配器，而且只匹配 `http://127.0.0.1:8080/*`，也就是 `fixtures/` 里那个合成站点。没有任何真实平台的适配器。缺少适配器时引擎会明确报错并说明原因，不会静默失败。
 
 重点在工程，不在工具。一份写清楚的接口定义、一套夹具驱动的测试、六篇能复跑出数字的实验记录，这三样是仓库的主要内容。
 
@@ -54,15 +54,19 @@
 
 ## 上手
 
+需要 Node 20 或更新的版本。测试里用到的 `jsdom` 与全局 `fetch` 都有这个下限。
+
 ```bash
 git clone git@github.com:SunshineMahiru/userscript-download-lab.git
 cd userscript-download-lab
 npm ci
 npm run serve          # 合成站点跑在 http://127.0.0.1:8080
-npm run build          # 产出 userscript-download-lab.user.js
+npm run build          # 重新生成 userscript-download-lab.user.js
 ```
 
-在脚本管理器里装上 `userscript-download-lab.user.js`，打开 `http://127.0.0.1:8080/chapter/ch-1`。左侧会出现一个面板，点解析会列出五项资源，勾选后能下载，也能把幻灯片序列合成一份 PDF。
+仓库里已经带了构建好的 `userscript-download-lab.user.js`，只有在改过 `src/` 之后才需要跑 `npm run build`。
+
+把它装进支持 `GM_xmlhttpRequest` 与 `GM_download` 的管理器——Tampermonkey、ScriptCat、Violentmonkey 都行——然后打开 `http://127.0.0.1:8080/chapter/ch-1`。左侧会出现一个面板，点解析会列出五项资源，勾选后能下载，也能把幻灯片序列合成一份 PDF。
 
 `serve` 和 `build` 开两个终端跑。脚本只匹配 8080 端口，合成站点必须在这个端口上。
 
@@ -105,7 +109,7 @@ npm run build          # 产出 userscript-download-lab.user.js
 | `01-page-counting.md` | 1500 页 20 次探测，线性要 1500 次 |
 | `02-pdf-page-geometry.md` | 固定 960 pt 宽，`/MediaBox` 实测 960×720 与 960×1920 |
 | `03-filename-boundaries.md` | 保留名、结尾点、168 字节上限，比文件系统上限留出余量 |
-| `04-error-code-taxonomy.md` | 四类错误来源，约四分之一被测试触发，其余逐条列出未覆盖 |
+| `04-error-code-taxonomy.md` | 四类错误来源，十四种码已被测试触发，其余逐条列出未覆盖原因 |
 | `05-signed-url-redirect.md` | 302 进签名地址，篡改与过期返回不同的 403 响应体 |
 | `06-cursor-pagination.md` | 五项引用用两次请求，请求次数也进断言 |
 
@@ -114,7 +118,7 @@ npm run build          # 产出 userscript-download-lab.user.js
 ## 目录
 
 ```text
-src/          引擎、适配器、面板、幻灯片、传输层、入口
+src/          引擎、适配器、面板、幻灯片、传输层、文件名、错误、请求、内联解析、元数据、入口
 fixtures/     合成站点的数据与幻灯片图片
 tools/        站点服务器、打包脚本、测试用传输层
 tests/        八个测试文件与共享的 jsdom 辅助
