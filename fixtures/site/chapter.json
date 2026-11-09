@@ -1,0 +1,9 @@
+{
+  "id": "ch-1",
+  "title": "示例章节",
+  "items": [
+    { "id": "doc-1", "name": "讲义.pdf", "type": "document" },
+    { "id": "doc-2", "name": "课件.pptx", "type": "document" },
+    { "id": "vid-1", "name": "课堂录像.mp4", "type": "video" }
+  ]
+}

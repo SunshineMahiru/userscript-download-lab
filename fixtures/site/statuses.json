@@ -1,0 +1,22 @@
+{
+  "doc-1": {
+    "ttl": 300,
+    "candidates": { "download": "doc-1.pdf", "pdf": "doc-1-preview.pdf" }
+  },
+  "doc-2": {
+    "ttl": 300,
+    "candidates": { "pdf": "doc-2-preview.pdf" }
+  },
+  "vid-1": {
+    "ttl": 300,
+    "candidates": { "http": "lecture.mp4" }
+  },
+  "vid-2": {
+    "ttl": 300,
+    "candidates": { "http": "lecture.m3u8" }
+  },
+  "exp-1": {
+    "ttl": -60,
+    "candidates": { "download": "expired.pdf" }
+  }
+}

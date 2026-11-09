@@ -1,0 +1,19 @@
+{
+  "pages": {
+    "0": {
+      "refs": [
+        { "id": "doc-1", "name": "讲义.pdf", "type": "document" },
+        { "id": "doc-2", "name": "课件.pptx", "type": "document" }
+      ],
+      "nextCursor": "1"
+    },
+    "1": {
+      "refs": [
+        { "id": "vid-1", "name": "课堂录像.mp4", "type": "video" },
+        { "id": "vid-2", "name": "课堂录像（分片）.m3u8", "type": "video" },
+        { "id": "exp-1", "name": "过期资料.pdf", "type": "document" }
+      ],
+      "nextCursor": null
+    }
+  }
+}
