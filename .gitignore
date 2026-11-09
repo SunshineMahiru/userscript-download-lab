@@ -16,3 +16,8 @@ Thumbs.db
 
 # Runtime logs
 *.log
+
+# Local environment overrides
+.env
+.env.*
+*.local
