@@ -42,16 +42,20 @@ export function installLayout(dom, { viewportHeight = 800, elementHeight = 200 }
 }
 
 // 建一个带布局补丁的文档，并把 window、document、localStorage 挂到全局，
-// 供按需 import 的模块读取。
+// 供按需 import 的模块读取。传入 html 时可以复现服务端返回的真实页面。
 // Create a document with the layout shims installed and expose the usual globals.
-export function bootScene({ storage = null, url = "http://127.0.0.1:8080/chapter/ch-1", ...layout } = {}) {
-  const dom = new JSDOM("<!doctype html><html><body><h1>示例章节</h1></body></html>", {
-    url,
-    pretendToBeVisual: true,
-  });
+// Passing html lets a test reproduce exactly what the server returned.
+export function bootScene({
+  storage = null,
+  url = "http://127.0.0.1:8080/chapter/ch-1",
+  html = "<!doctype html><html><body><h1>示例章节</h1></body></html>",
+  ...layout
+} = {}) {
+  const dom = new JSDOM(html, { url, pretendToBeVisual: true });
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
   globalThis.localStorage = dom.window.localStorage;
+  globalThis.location = dom.window.location;
   installLayout(dom, layout);
   if (storage !== null) dom.window.localStorage.setItem(TAB_STORAGE_KEY, String(storage));
   return dom;

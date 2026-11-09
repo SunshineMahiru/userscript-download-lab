@@ -9,7 +9,9 @@ import { buildPdf, countSeries, createSlideFetcher, rasterize, saveBlob } from "
 import { sanitizeFileName } from "./filename.js";
 import { ToolkitError } from "./errors.js";
 
-const FIXTURE_ORIGIN = "http://127.0.0.1:8080";
+// 合成站点的地址取自当前页面。生产环境里它就是 127.0.0.1:8080，测试里可以是任意端口。
+// The fixture origin comes from the current page: fixed in production, arbitrary in tests.
+const FIXTURE_ORIGIN = location.origin;
 
 function collectContext() {
   return {
