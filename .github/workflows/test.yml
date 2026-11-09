@@ -1,0 +1,21 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # npm ci 使用提交在库里的锁文件，依赖版本与本地一致。
+      # npm ci installs from the committed lockfile so versions match local runs.
+      - run: npm ci
+      # 产物与源码的逐字节校验在测试内完成，忘记重建会让这一步失败。
+      # The byte-level artifact check runs inside the suite; a missed rebuild fails here.
+      - run: npm test
