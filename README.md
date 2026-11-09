@@ -28,9 +28,11 @@ The point is the engineering, not the tool: a documented interface, a fixture-dr
 
 - Six-member adapter interface, five required and one optional, each returning plain data.
 - Transport injection: production wraps `GM_xmlhttpRequest` / `GM_download`, tests wrap `node:http` backed by real HTTP against the fixture server. No behaviour is faked to make a test pass.
-- 73 assertions across eight test files, covering filename rules, the fixture server, the engine, slide probing, the panel, the entry wiring, error mapping, and the built artifact.
+- 83 assertions across nine test files, covering filename rules, the fixture server, the engine, slide probing, error mapping, the panel, the entry wiring, the bundled artifact, and the metadata.
+- Panel strings in Chinese and English, chosen from the browser language.
 - Page counting by exponential-then-binary probe: 1500 slides cost 20 requests instead of 1500.
 - Six experiment records in `docs/experiments/`, each with a reproducible command and the numbers it produced.
+- A manual acceptance checklist in [`docs/manual-check.md`](docs/manual-check.md) for the parts only a real script manager can answer.
 
 ## Architecture
 
@@ -85,18 +87,19 @@ The interface has no reserved members. Anything the engine cannot drive is simpl
 
 ## Tests
 
-`npm test` runs all eight files in one command.
+`npm test` runs all nine files in one command.
 
 | File | Assertions | Covers |
 | --- | --- | --- |
 | `filename.test.mjs` | 9 | Extension resolution, Windows reserved names, byte truncation |
-| `server.test.mjs` | 12 | Fixture routes, 302 signing, expiry, slide bounds |
-| `engine.test.mjs` | 8 | Pagination, resolution, batch download, capability checks |
-| `slides.test.mjs` | 7 | Address building, probe cost, PDF page geometry |
+| `server.test.mjs` | 13 | Fixture routes, 302 signing, expiry, slide bounds, viewer page |
+| `engine.test.mjs` | 9 | Pagination, resolution, batch download, series detection, capability checks |
+| `slides.test.mjs` | 9 | Address building, probe cost, real rasterising, PDF page geometry |
 | `errors.test.mjs` | 11 | Status-code mapping, manager callbacks, missing capabilities |
-| `panel.test.mjs` | 13 | Rendering, escaping, selection state, drag and position memory |
+| `panel.test.mjs` | 14 | Rendering, escaping, selection state, drag, both locales |
 | `boot.test.mjs` | 5 | Entry wiring end to end with injected host APIs |
-| `artifact.test.mjs` | 8 | Metadata block, byte-level sync with sources, forbidden strings |
+| `bundle.test.mjs` | 4 | The built file executed in a DOM, not the sources |
+| `artifact.test.mjs` | 9 | Metadata, byte-level sync, version parity, forbidden strings |
 
 The artifact test rebuilds the bundle and compares it byte for byte with the tracked file, so a source change without a rebuild fails the suite. CI runs `npm ci` and `npm test` on every push and pull request.
 
@@ -119,8 +122,8 @@ Data in every record comes from the fixture site or from local computation, and 
 src/          engine, adapter, panel, slides, transport, filename, errors, request, json, meta, entry
 fixtures/     synthetic site data and slide images
 tools/        fixture server, bundler, node transport
-tests/        eight test files plus shared jsdom helpers
-docs/         architecture, decisions (adr), experiments
+tests/        nine test files plus shared jsdom helpers
+docs/         architecture, decisions (adr), experiments, manual checklist
 ```
 
 `docs/PROJECT.md` and `docs/repositioning.md` are working notes and stay out of the repository.

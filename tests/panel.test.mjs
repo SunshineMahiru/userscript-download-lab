@@ -151,6 +151,16 @@ await check("拖拽不会触发一次展开", () => {
   assert.equal(mounted.root.classList.contains("udl-open"), false, "拖拽结束的点击应被吞掉");
 });
 
+await check("英文环境下界面改用英文文案", () => {
+  const enScene = bootScene({ language: "en-US" });
+  const mounted = mountPanelInto(enScene.window, mountPanel);
+  assert.equal(mounted.root.querySelector("#udl-parse").textContent, "Parse this chapter");
+  assert.match(mounted.root.querySelector("#udl-list").textContent, /Resources appear here after parsing/);
+  mounted.panel.setResources([{ name: "a.pdf", kind: "pdf", url: "#", selected: true }]);
+  assert.equal(mounted.root.querySelector("#udl-download").textContent, "Download selected (1)");
+  assert.equal(mounted.root.querySelector("#udl-count").textContent, "1 items");
+});
+
 process.stdout.write(`\n通过 ${passed} 项，失败 ${failures.length} 项\n`);
 if (failures.length) {
   for (const failure of failures) {

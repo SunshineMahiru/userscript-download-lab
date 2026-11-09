@@ -12,6 +12,170 @@
 // @require      https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js
 // ==/UserScript==
 (() => {
+  // src/messages.js
+  var TABLES = {
+    zh: {
+      tabChars: ["实", "验", "面", "板"],
+      tabLabel: "展开实验面板",
+      panelTitle: "本章资源",
+      collapseHint: "点击书签收起",
+      parse: "解析本章资源",
+      resultLabel: "解析结果",
+      countUnit: "{count} 项",
+      emptyList: "解析后在此列出本章资源",
+      download: "下载选中（{count}）",
+      downloading: "下载中…",
+      composePdf: "合成幻灯片 PDF",
+      composing: "合成中…",
+      seriesMissing: "未检测到幻灯片序列",
+      seriesFound: "已找到幻灯片序列，至少 {count} 页",
+      initialStatus: "只处理当前账号有权访问的资源",
+      reading: "正在读取本章资源…",
+      parsedSome: "已解析 {ok} 项，{failed} 项不可用。",
+      parsedAll: "已解析 {count} 项资源。",
+      downloadingCount: "正在下载 {count} 项…",
+      downloadProgress: "正在下载 {index}/{total}：{name}",
+      downloadDone: "已提交 {count} 个文件到浏览器下载。",
+      downloadSomeFailed: "{count} 项失败，首个原因：{code} {hint}",
+      countingPages: "正在统计页数…",
+      composingPage: "正在合成 {page}/{total}",
+      writingPdf: "正在写入 PDF…",
+      pdfSaved: "已保存 {total} 页，约 {size} MB。",
+      downloadFailed: "下载失败：{code}",
+      requestFailed: "请求失败：HTTP {status}",
+      unknownManagerHint: "在控制台查看完整错误对象。",
+      managerHints: {
+        not_permitted: "脚本管理器未放行该下载域名。在管理器设置里允许访问后重试。",
+        not_whitelisted: "目标域名不在 @connect 声明内。补上声明后重新安装脚本。",
+        not_supported: "脚本管理器不支持该资源类型。分片清单通常无法作为单文件下载。",
+        not_found: "服务器返回 404，资源可能已被移除。",
+        forbidden: "服务器拒绝访问，登录状态可能已过期。",
+        not_enabled: "脚本管理器的下载功能处于关闭状态。",
+        not_succeeded: "下载被浏览器或管理器中止。"
+      },
+      transportHints: {
+        timeout: "请求超时，稍后重试。",
+        network: "网络请求失败，检查连接后重试。",
+        "http-403": "服务器拒绝访问，可能需要重新登录。",
+        "http-404": "地址不存在，资源可能已下架。",
+        "http-5xx": "服务器内部错误，稍后重试。"
+      },
+      transportMissingRequest: "脚本管理器没有提供 GM_xmlhttpRequest",
+      transportMissingRequestHint: "启用该接口后刷新页面。",
+      transportMissingDownload: "脚本管理器没有提供 GM_download",
+      transportMissingDownloadHint: "在管理器里启用下载权限后刷新页面。",
+      networkFailed: "网络请求失败",
+      networkFailedHint: "检查网络连接后重试。",
+      requestTimeout: "请求超时",
+      requestTimeoutHint: "稍后重试。",
+      downloadTimeout: "下载超时",
+      downloadTimeoutHint: "资源较大或网络不稳定，稍后重试。",
+      adapterMissing: "当前页面没有可用适配器",
+      adapterMissingHint: "在适配器列表里补齐匹配规则。",
+      capabilityMissing: "适配器缺少必需能力",
+      capabilityMissingHint: "listing 与 status 必须为 true。",
+      chapterNotFound: "当前页面不是章节页",
+      chapterNotFoundHint: "进入具体章节后再试。",
+      notAFile: "未取到可下载地址：{name}",
+      notAFileHint: "状态响应里没有可用字段。",
+      seriesUnsupported: "该适配器不支持幻灯片序列",
+      seriesUnsupportedHint: "只能下载列表里的资源。",
+      notASeries: "当前页面没有幻灯片序列",
+      notASeriesHint: "该章节可能使用文档或视频阅览器。",
+      emptySeries: "未取到任何幻灯片页面",
+      emptySeriesHint: "资源可能需要重新登录后才能访问。",
+      emptyPages: "没有可写入的页面",
+      emptyPagesHint: "",
+      dependencyMissing: "jsPDF 未加载",
+      dependencyHint: "脚本管理器可能拦截了 @require 的地址。"
+    },
+    en: {
+      tabChars: ["L", "A", "B"],
+      tabLabel: "Open the experiment panel",
+      panelTitle: "Chapter resources",
+      collapseHint: "Click the tab to hide",
+      parse: "Parse this chapter",
+      resultLabel: "Results",
+      countUnit: "{count} items",
+      emptyList: "Resources appear here after parsing",
+      download: "Download selected ({count})",
+      downloading: "Downloading…",
+      composePdf: "Compose slide PDF",
+      composing: "Composing…",
+      seriesMissing: "No slide sequence detected",
+      seriesFound: "Sequence found, at least {count} pages",
+      initialStatus: "Only resources this account can already access",
+      reading: "Reading this chapter…",
+      parsedSome: "Parsed {ok}, {failed} unavailable.",
+      parsedAll: "Parsed {count} resources.",
+      downloadingCount: "Downloading {count} items…",
+      downloadProgress: "Downloading {index}/{total}: {name}",
+      downloadDone: "Handed {count} files to the browser.",
+      downloadSomeFailed: "{count} failed, first reason: {code} {hint}",
+      countingPages: "Counting pages…",
+      composingPage: "Composing {page}/{total}",
+      writingPdf: "Writing the PDF…",
+      pdfSaved: "Saved {total} pages, about {size} MB.",
+      downloadFailed: "Download failed: {code}",
+      requestFailed: "Request failed: HTTP {status}",
+      unknownManagerHint: "Check the console for the full error object.",
+      managerHints: {
+        not_permitted: "The manager blocks this download host. Allow it in the manager settings and retry.",
+        not_whitelisted: "The host is missing from the @connect list. Add it and reinstall the script.",
+        not_supported: "The manager does not support this resource type. Segment playlists usually cannot be saved as one file.",
+        not_found: "The server returned 404; the resource may be gone.",
+        forbidden: "The server refused access; the session may have expired.",
+        not_enabled: "Downloads are disabled in the manager.",
+        not_succeeded: "The browser or the manager stopped the download."
+      },
+      transportHints: {
+        timeout: "The request timed out. Try again later.",
+        network: "The network request failed. Check the connection and retry.",
+        "http-403": "The server refused access; signing in again may help.",
+        "http-404": "The address does not exist; the resource may be gone.",
+        "http-5xx": "The server reported an internal error. Try again later."
+      },
+      transportMissingRequest: "The manager does not expose GM_xmlhttpRequest",
+      transportMissingRequestHint: "Enable it and reload the page.",
+      transportMissingDownload: "The manager does not expose GM_download",
+      transportMissingDownloadHint: "Enable download permission in the manager and reload the page.",
+      networkFailed: "Network request failed",
+      networkFailedHint: "Check the connection and retry.",
+      requestTimeout: "Request timed out",
+      requestTimeoutHint: "Try again later.",
+      downloadTimeout: "Download timed out",
+      downloadTimeoutHint: "The resource is large or the network is unstable. Try again later.",
+      adapterMissing: "No adapter is available for this page",
+      adapterMissingHint: "Add a matching rule to the adapter list.",
+      capabilityMissing: "The adapter is missing a required capability",
+      capabilityMissingHint: "listing and status must both be true.",
+      chapterNotFound: "This page is not a chapter page",
+      chapterNotFoundHint: "Open a specific chapter and try again.",
+      notAFile: "No downloadable address for {name}",
+      notAFileHint: "The status response has no usable field.",
+      seriesUnsupported: "This adapter has no slide sequence support",
+      seriesUnsupportedHint: "Only listed resources can be downloaded.",
+      notASeries: "No slide sequence on this page",
+      notASeriesHint: "This chapter may use a document or video viewer.",
+      emptySeries: "No slide pages were found",
+      emptySeriesHint: "The resource may require signing in again.",
+      emptyPages: "There are no pages to write",
+      emptyPagesHint: "",
+      dependencyMissing: "jsPDF is not loaded",
+      dependencyHint: "The manager may be blocking the @require URL."
+    }
+  };
+  function detectLocale(language) {
+    return String(language || "").toLowerCase().startsWith("zh") ? "zh" : "en";
+  }
+  function format(template, values = {}) {
+    return String(template).replace(/\{(\w+)\}/g, (_, key) => key in values ? String(values[key]) : `{${key}}`);
+  }
+  function createMessages(locale) {
+    const resolved = locale || detectLocale(globalThis.navigator && globalThis.navigator.language);
+    return { locale: resolved, ...TABLES[resolved] };
+  }
+
   // src/errors.js
   var ToolkitError = class extends Error {
     constructor(code, message, hint = "") {
@@ -21,29 +185,19 @@
       this.hint = hint;
     }
   };
-  var MANAGER_HINT = {
-    not_permitted: "脚本管理器未放行该下载域名。在管理器设置里允许访问后重试。",
-    not_whitelisted: "目标域名不在 @connect 声明内。补上声明后重新安装脚本。",
-    not_supported: "脚本管理器不支持该资源类型。分片清单通常无法作为单文件下载。",
-    not_found: "服务器返回 404，资源可能已被移除。",
-    forbidden: "服务器拒绝访问，登录状态可能已过期。",
-    not_enabled: "脚本管理器的下载功能处于关闭状态。",
-    not_succeeded: "下载被浏览器或管理器中止。"
-  };
-  var TRANSPORT_HINT = {
-    timeout: "请求超时，稍后重试。",
-    network: "网络请求失败，检查连接后重试。",
-    "http-403": "服务器拒绝访问，可能需要重新登录。",
-    "http-404": "地址不存在，资源可能已下架。",
-    "http-5xx": "服务器内部错误，稍后重试。"
-  };
   function managerError(info) {
+    const messages2 = createMessages();
     const code = typeof info === "string" ? info : String(info && (info.error || info.code) || "error");
-    return new ToolkitError(code, `下载失败：${code}`, MANAGER_HINT[code] || "在控制台查看完整错误对象。");
+    return new ToolkitError(
+      code,
+      format(messages2.downloadFailed, { code }),
+      messages2.managerHints[code] || messages2.unknownManagerHint
+    );
   }
   function transportError(status) {
+    const messages2 = createMessages();
     const code = status === 403 ? "http-403" : status === 404 ? "http-404" : status >= 500 ? "http-5xx" : `http-${status}`;
-    return new ToolkitError(code, `请求失败：HTTP ${status}`, TRANSPORT_HINT[code] || "");
+    return new ToolkitError(code, format(messages2.requestFailed, { status }), messages2.transportHints[code] || "");
   }
   function contentError(code, message, hint = "") {
     return new ToolkitError(code, message, hint);
@@ -159,16 +313,17 @@
 
   // src/engine.js
   function createEngine({ adapter, transport }) {
+    const messages2 = createMessages();
     if (!adapter) {
-      throw new ToolkitError("adapter-missing", "当前页面没有可用适配器", "在适配器列表里补齐匹配规则。");
+      throw new ToolkitError("adapter-missing", messages2.adapterMissing, messages2.adapterMissingHint);
     }
     if (!adapter.capabilities.listing || !adapter.capabilities.status) {
-      throw new ToolkitError("capability-missing", "适配器缺少必需能力", "listing 与 status 必须为 true。");
+      throw new ToolkitError("capability-missing", messages2.capabilityMissing, messages2.capabilityMissingHint);
     }
     async function readChapter(context) {
       const chapter = adapter.readChapter(context);
       if (!chapter) {
-        throw new ToolkitError("chapter-not-found", "当前页面不是章节页", "进入具体章节后再试。");
+        throw new ToolkitError("chapter-not-found", messages2.chapterNotFound, messages2.chapterNotFoundHint);
       }
       return chapter;
     }
@@ -191,7 +346,11 @@
       const payload = await requestJson(transport, spec);
       const resource = adapter.parseStatus(payload, ref);
       if (!resource) {
-        throw contentError("not-a-file", `未取到可下载地址：${ref.name}`, "状态响应里没有可用字段。");
+        throw contentError(
+          "not-a-file",
+          format(messages2.notAFile, { name: ref.name }),
+          messages2.notAFileHint
+        );
       }
       return { resource, spec };
     }
@@ -357,10 +516,11 @@
     return void 0;
   }
   function createManagerTransport(scope = globalThis) {
+    const messages2 = createMessages();
     const xmlhttpRequest = resolveApi(scope, "GM_xmlhttpRequest");
     const managerDownload = resolveApi(scope, "GM_download");
     if (typeof xmlhttpRequest !== "function") {
-      throw new ToolkitError("transport-missing", "脚本管理器没有提供 GM_xmlhttpRequest", "启用该接口后刷新页面。");
+      throw new ToolkitError("transport-missing", messages2.transportMissingRequest, messages2.transportMissingRequestHint);
     }
     return {
       request(spec) {
@@ -372,14 +532,14 @@
             responseType: spec.responseType || "text",
             timeout: spec.timeout || 3e4,
             onload: (response) => resolve({ status: response.status, body: response.response }),
-            onerror: () => reject(new ToolkitError("network", "网络请求失败", "检查网络连接后重试。")),
-            ontimeout: () => reject(new ToolkitError("timeout", "请求超时", "稍后重试。"))
+            onerror: () => reject(new ToolkitError("network", messages2.networkFailed, messages2.networkFailedHint)),
+            ontimeout: () => reject(new ToolkitError("timeout", messages2.requestTimeout, messages2.requestTimeoutHint))
           });
         });
       },
       download(spec) {
         if (typeof managerDownload !== "function") {
-          throw new ToolkitError("not_enabled", "脚本管理器没有提供 GM_download", "在管理器里启用下载权限后刷新页面。");
+          throw new ToolkitError("not_enabled", messages2.transportMissingDownload, messages2.transportMissingDownloadHint);
         }
         return new Promise((resolve, reject) => {
           managerDownload({
@@ -390,7 +550,7 @@
             timeout: spec.timeout || 18e4,
             onload: () => resolve(),
             onerror: (info) => reject(managerError(info)),
-            ontimeout: () => reject(new ToolkitError("timeout", "下载超时", "资源较大或网络不稳定，稍后重试。"))
+            ontimeout: () => reject(new ToolkitError("timeout", messages2.downloadTimeout, messages2.downloadTimeoutHint))
           });
         });
       }
@@ -451,24 +611,25 @@
     }
   }
   function mountPanel({ onParse, onDownload, onPdf }) {
+    const messages2 = createMessages();
     const root = document.createElement("aside");
     root.id = "udl-root";
     root.innerHTML = `
     <style>${STYLE}</style>
-    <button id="udl-tab" type="button" aria-expanded="false" aria-label="展开实验面板">
-      <span class="udl-tab-text"><span>实</span><span>验</span><span>面</span><span>板</span></span>
+    <button id="udl-tab" type="button" aria-expanded="false" aria-label="${messages2.tabLabel}">
+      <span class="udl-tab-text">${messages2.tabChars.map((char) => `<span>${char}</span>`).join("")}</span>
     </button>
-    <section id="udl-panel" aria-label="实验面板">
-      <div class="udl-head"><span>本章资源</span><small>点击书签收起</small></div>
-      <button id="udl-parse" class="udl-action" type="button">解析本章资源</button>
-      <div class="udl-sub"><span>解析结果</span><span id="udl-count">0 项</span></div>
-      <div id="udl-list"><p class="udl-empty">解析后在此列出本章资源</p></div>
-      <button id="udl-download" class="udl-action udl-download" type="button" disabled>下载选中（0）</button>
+    <section id="udl-panel" aria-label="${messages2.panelTitle}">
+      <div class="udl-head"><span>${messages2.panelTitle}</span><small>${messages2.collapseHint}</small></div>
+      <button id="udl-parse" class="udl-action" type="button">${messages2.parse}</button>
+      <div class="udl-sub"><span>${messages2.resultLabel}</span><span id="udl-count">${format(messages2.countUnit, { count: 0 })}</span></div>
+      <div id="udl-list"><p class="udl-empty">${messages2.emptyList}</p></div>
+      <button id="udl-download" class="udl-action udl-download" type="button" disabled>${format(messages2.download, { count: 0 })}</button>
       <div class="udl-section">
-        <button id="udl-pdf" class="udl-action" type="button">合成幻灯片 PDF</button>
-        <p id="udl-hint" class="udl-hint">未检测到幻灯片序列</p>
+        <button id="udl-pdf" class="udl-action" type="button">${messages2.composePdf}</button>
+        <p id="udl-hint" class="udl-hint">${messages2.seriesMissing}</p>
       </div>
-      <p id="udl-status" class="udl-status">只处理当前账号有权访问的资源</p>
+      <p id="udl-status" class="udl-status">${messages2.initialStatus}</p>
     </section>
   `;
     document.documentElement.appendChild(root);
@@ -491,11 +652,11 @@
       const list = root.querySelector("#udl-list");
       const count = root.querySelector("#udl-count");
       const button = root.querySelector("#udl-download");
-      count.textContent = `${resources.length} 项`;
+      count.textContent = format(messages2.countUnit, { count: resources.length });
       button.disabled = busy || selected().length === 0;
-      button.textContent = busy ? "下载中…" : `下载选中（${selected().length}）`;
+      button.textContent = busy ? messages2.downloading : format(messages2.download, { count: selected().length });
       if (!resources.length) {
-        list.innerHTML = '<p class="udl-empty">解析后在此列出本章资源</p>';
+        list.innerHTML = `<p class="udl-empty">${messages2.emptyList}</p>`;
         return;
       }
       list.innerHTML = resources.map(
@@ -517,8 +678,8 @@
       const button = root.querySelector("#udl-pdf");
       const hint = root.querySelector("#udl-hint");
       button.disabled = pdfBusy;
-      button.textContent = pdfBusy ? "合成中…" : "合成幻灯片 PDF";
-      hint.textContent = series ? `已找到幻灯片序列，至少 ${series.count} 页` : "未检测到幻灯片序列";
+      button.textContent = pdfBusy ? messages2.composing : messages2.composePdf;
+      hint.textContent = series ? format(messages2.seriesFound, { count: series.count }) : messages2.seriesMissing;
     }
     function setOpen(next) {
       open = next;
@@ -670,7 +831,10 @@
       const response = await transport.request({ url: slideAddress(series, page), responseType: "blob" });
       return response.status >= 200 && response.status < 300;
     }, maxPages);
-    if (!counted) throw new ToolkitError("empty", "未取到任何幻灯片页面", "资源可能需要重新登录后才能访问。");
+    if (!counted) {
+      const messages2 = createMessages();
+      throw new ToolkitError("empty", messages2.emptySeries, messages2.emptySeriesHint);
+    }
     return counted;
   }
   function createSlideFetcher(transport, series, { headers = {}, timeout } = {}) {
@@ -687,21 +851,31 @@
     }
     return { fetchPage, release };
   }
-  async function rasterize(blob, quality = DEFAULT_JPEG_QUALITY) {
-    const bitmap = await createImageBitmap(blob);
+  function defaultDecode(blob) {
+    return createImageBitmap(blob);
+  }
+  function defaultMakeCanvas(width, height) {
     const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  }
+  async function rasterize(blob, { quality = DEFAULT_JPEG_QUALITY, decode = defaultDecode, makeCanvas = defaultMakeCanvas } = {}) {
+    const bitmap = await decode(blob);
+    const canvas = makeCanvas(bitmap.width, bitmap.height);
     const context = canvas.getContext("2d");
     context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillRect(0, 0, bitmap.width, bitmap.height);
     context.drawImage(bitmap, 0, 0);
-    const size = { width: canvas.width, height: canvas.height };
+    const size = { width: bitmap.width, height: bitmap.height };
     if (typeof bitmap.close === "function") bitmap.close();
     return { ...size, dataUrl: canvas.toDataURL("image/jpeg", quality) };
   }
   function buildPdf(jsPDF, pages, { pageWidth = DEFAULT_PAGE_WIDTH } = {}) {
-    if (!pages.length) throw new ToolkitError("empty", "没有可写入的页面", "");
+    if (!pages.length) {
+      const messages2 = createMessages();
+      throw new ToolkitError("empty", messages2.emptyPages, messages2.emptyPagesHint);
+    }
     const heightOf = (page) => Math.round(pageWidth * page.height / page.width);
     const orientationOf = (page) => heightOf(page) >= pageWidth ? "portrait" : "landscape";
     const first = pages[0];
@@ -731,6 +905,7 @@
   }
 
   // src/main.js
+  var messages = createMessages();
   var FIXTURE_ORIGIN = location.origin;
   function collectContext() {
     return {
@@ -745,7 +920,7 @@
   function jsPdfNamespace() {
     const namespace = typeof jspdf !== "undefined" ? jspdf : window.jspdf;
     if (!namespace || typeof namespace.jsPDF !== "function") {
-      throw new ToolkitError("dependency-missing", "jsPDF 未加载", "脚本管理器可能拦截了 @require 的地址。");
+      throw new ToolkitError("dependency-missing", messages.dependencyMissing, messages.dependencyHint);
     }
     return namespace.jsPDF;
   }
@@ -768,15 +943,15 @@
       onParse({ setBusy }) {
         guard(panel, async () => {
           setBusy(true);
-          panel.setStatus("正在读取本章资源…");
+          panel.setStatus(messages.reading);
           try {
             const { items, failures } = await engine.resolveAll(collectContext());
             resources = items.map((item) => ({ ...item, selected: true }));
             panel.setResources(resources);
             if (failures.length) {
-              panel.setStatus(`已解析 ${items.length} 项，${failures.length} 项不可用。`, "warning");
+              panel.setStatus(format(messages.parsedSome, { ok: items.length, failed: failures.length }), "warning");
             } else {
-              panel.setStatus(`已解析 ${items.length} 项资源。`, "success");
+              panel.setStatus(format(messages.parsedAll, { count: items.length }), "success");
             }
           } finally {
             setBusy(false);
@@ -787,17 +962,20 @@
         guard(panel, async () => {
           if (!selected.length) return;
           panel.setBusy(true);
-          panel.setStatus(`正在下载 ${selected.length} 项…`);
+          panel.setStatus(format(messages.downloadingCount, { count: selected.length }));
           try {
             const outcome = await engine.downloadAll(selected, {
-              onItem: ({ index, total, name }) => panel.setStatus(`正在下载 ${index + 1}/${total}：${name}`)
+              onItem: ({ index, total, name }) => panel.setStatus(format(messages.downloadProgress, { index: index + 1, total, name }))
             });
             if (!outcome.failed.length) {
-              panel.setStatus(`已提交 ${outcome.saved} 个文件到浏览器下载。`, "success");
+              panel.setStatus(format(messages.downloadDone, { count: outcome.saved }), "success");
               return;
             }
             const first = outcome.failed[0];
-            panel.setStatus(`${outcome.failed.length} 项失败，首个原因：${first.code} ${first.hint}`, "warning");
+            panel.setStatus(
+              format(messages.downloadSomeFailed, { count: outcome.failed.length, code: first.code, hint: first.hint }),
+              "warning"
+            );
           } finally {
             panel.setBusy(false);
           }
@@ -806,29 +984,32 @@
       onPdf() {
         guard(panel, async () => {
           if (!adapter.capabilities.series || typeof adapter.readSeries !== "function") {
-            throw new ToolkitError("capability-missing", "该适配器不支持幻灯片序列", "只能下载列表里的资源。");
+            throw new ToolkitError("capability-missing", messages.seriesUnsupported, messages.seriesUnsupportedHint);
           }
           const series = adapter.readSeries(collectContext());
           if (!series) {
-            throw new ToolkitError("series-missing", "当前页面没有幻灯片序列", "该章节可能使用文档或视频阅览器。");
+            throw new ToolkitError("series-missing", messages.notASeries, messages.notASeriesHint);
           }
           panel.setSeries(series);
           panel.setPdfBusy(true);
           try {
-            panel.setStatus("正在统计页数…");
+            panel.setStatus(messages.countingPages);
             const total = await countSeries(transport, series);
             const fetcher = createSlideFetcher(transport, series, { headers: { Referer: location.href } });
             const pages = [];
             for (let page = 1; page <= total; page += 1) {
-              panel.setStatus(`正在合成 ${page}/${total}`);
+              panel.setStatus(format(messages.composingPage, { page, total }));
               const blob = await fetcher.fetchPage(page);
               pages.push(await rasterize(blob));
               fetcher.release(page);
             }
-            panel.setStatus("正在写入 PDF…");
+            panel.setStatus(messages.writingPdf);
             const pdfBlob = buildPdf(jsPdfNamespace(), pages);
             saveBlob(pdfBlob, sanitizeFileName(document.title || "章节", "", "pdf"));
-            panel.setStatus(`已保存 ${total} 页，约 ${(pdfBlob.size / 1048576).toFixed(1)} MB。`, "success");
+            panel.setStatus(
+              format(messages.pdfSaved, { total, size: (pdfBlob.size / 1048576).toFixed(1) }),
+              "success"
+            );
           } finally {
             panel.setPdfBusy(false);
           }

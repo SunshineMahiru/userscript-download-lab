@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { ARTIFACT, buildUserscript } from "../tools/build.mjs";
+
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 
 // 产物纳入版本库，因此必须与源码同步。先记录提交在库里的内容，再构建一次，
 // 两者不一致就说明有人改了源码却没重新构建。
@@ -68,6 +73,13 @@ check("不声明更新地址", () => {
   // Without a distribution channel an update URL has nothing to poll.
   assert.doesNotMatch(text, /@updateURL/);
   assert.doesNotMatch(text, /@downloadURL/);
+});
+
+check("版本号与包清单一致", () => {
+  const version = text.match(/\/\/ @version\s+(\S+)/)[1];
+  // 两处版本号是手工维护的，改一处忘另一处只会在发布后被发现。
+  // Both version strings are edited by hand; drift only shows up after a release.
+  assert.equal(version, manifest.version, `产物 ${version}，包清单 ${manifest.version}`);
 });
 
 check("产物不含平台字样", () => {

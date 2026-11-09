@@ -3,6 +3,7 @@
 
 import { ToolkitError } from "./errors.js";
 import { requestBlob } from "./request.js";
+import { createMessages } from "./messages.js";
 
 export const DEFAULT_MAX_PAGES = 1500;
 export const DEFAULT_PAGE_WIDTH = 960;
@@ -39,7 +40,10 @@ export async function countSeries(transport, series, { maxPages = DEFAULT_MAX_PA
     return response.status >= 200 && response.status < 300;
   }, maxPages);
 
-  if (!counted) throw new ToolkitError("empty", "未取到任何幻灯片页面", "资源可能需要重新登录后才能访问。");
+  if (!counted) {
+    const messages = createMessages();
+    throw new ToolkitError("empty", messages.emptySeries, messages.emptySeriesHint);
+  }
   return counted;
 }
 
@@ -61,18 +65,34 @@ export function createSlideFetcher(transport, series, { headers = {}, timeout } 
   return { fetchPage, release };
 }
 
+// 解码与画布创建可注入：浏览器用全局实现，测试用 node 的实现，
+// 这样重编码这一步能真实跑一遍而不是被跳过。
+// Decoding and canvas creation are injectable so the re-encode step can run for real
+// in tests instead of being skipped.
+function defaultDecode(blob) {
+  return createImageBitmap(blob);
+}
+
+function defaultMakeCanvas(width, height) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
+}
+
 // 画布重编码为 JPEG，避免直接把 PNG 塞进 PDF 造成体积膨胀。
 // Re-encode to JPEG so a PNG does not bloat the PDF.
-export async function rasterize(blob, quality = DEFAULT_JPEG_QUALITY) {
-  const bitmap = await createImageBitmap(blob);
-  const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
+export async function rasterize(
+  blob,
+  { quality = DEFAULT_JPEG_QUALITY, decode = defaultDecode, makeCanvas = defaultMakeCanvas } = {},
+) {
+  const bitmap = await decode(blob);
+  const canvas = makeCanvas(bitmap.width, bitmap.height);
   const context = canvas.getContext("2d");
   context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillRect(0, 0, bitmap.width, bitmap.height);
   context.drawImage(bitmap, 0, 0);
-  const size = { width: canvas.width, height: canvas.height };
+  const size = { width: bitmap.width, height: bitmap.height };
   if (typeof bitmap.close === "function") bitmap.close();
   return { ...size, dataUrl: canvas.toDataURL("image/jpeg", quality) };
 }
@@ -80,7 +100,10 @@ export async function rasterize(blob, quality = DEFAULT_JPEG_QUALITY) {
 // jsPDF 由调用方注入：浏览器里来自 @require，测试里来自 npm 包。
 // jsPDF is injected by the caller: from @require in the browser, from the npm package in tests.
 export function buildPdf(jsPDF, pages, { pageWidth = DEFAULT_PAGE_WIDTH } = {}) {
-  if (!pages.length) throw new ToolkitError("empty", "没有可写入的页面", "");
+  if (!pages.length) {
+    const messages = createMessages();
+    throw new ToolkitError("empty", messages.emptyPages, messages.emptyPagesHint);
+  }
   const heightOf = (page) => Math.round((pageWidth * page.height) / page.width);
   const orientationOf = (page) => (heightOf(page) >= pageWidth ? "portrait" : "landscape");
   const first = pages[0];

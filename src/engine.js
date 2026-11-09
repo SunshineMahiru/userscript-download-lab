@@ -2,21 +2,23 @@
 // Engine: schedules requests, normalises errors and runs downloads. It knows no site.
 
 import { ToolkitError, contentError } from "./errors.js";
+import { createMessages, format } from "./messages.js";
 import { requestJson, requestText } from "./request.js";
 import { inferKind, sanitizeFileName } from "./filename.js";
 
 export function createEngine({ adapter, transport }) {
+  const messages = createMessages();
   if (!adapter) {
-    throw new ToolkitError("adapter-missing", "当前页面没有可用适配器", "在适配器列表里补齐匹配规则。");
+    throw new ToolkitError("adapter-missing", messages.adapterMissing, messages.adapterMissingHint);
   }
   if (!adapter.capabilities.listing || !adapter.capabilities.status) {
-    throw new ToolkitError("capability-missing", "适配器缺少必需能力", "listing 与 status 必须为 true。");
+    throw new ToolkitError("capability-missing", messages.capabilityMissing, messages.capabilityMissingHint);
   }
 
   async function readChapter(context) {
     const chapter = adapter.readChapter(context);
     if (!chapter) {
-      throw new ToolkitError("chapter-not-found", "当前页面不是章节页", "进入具体章节后再试。");
+      throw new ToolkitError("chapter-not-found", messages.chapterNotFound, messages.chapterNotFoundHint);
     }
     return chapter;
   }
@@ -43,7 +45,11 @@ export function createEngine({ adapter, transport }) {
     const payload = await requestJson(transport, spec);
     const resource = adapter.parseStatus(payload, ref);
     if (!resource) {
-      throw contentError("not-a-file", `未取到可下载地址：${ref.name}`, "状态响应里没有可用字段。");
+      throw contentError(
+        "not-a-file",
+        format(messages.notAFile, { name: ref.name }),
+        messages.notAFileHint,
+      );
     }
     return { resource, spec };
   }

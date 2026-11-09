@@ -49,13 +49,18 @@ export function bootScene({
   storage = null,
   url = "http://127.0.0.1:8080/chapter/ch-1",
   html = "<!doctype html><html><body><h1>示例章节</h1></body></html>",
+  language = "zh-CN",
   ...layout
 } = {}) {
   const dom = new JSDOM(html, { url, pretendToBeVisual: true });
+  Object.defineProperty(dom.window.navigator, "language", { value: language, configurable: true });
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
   globalThis.localStorage = dom.window.localStorage;
   globalThis.location = dom.window.location;
+  // 界面文案按 navigator.language 选取，模块读的是全局 navigator。
+  // The panel picks its locale from navigator.language, read from the global.
+  Object.defineProperty(globalThis, "navigator", { value: dom.window.navigator, configurable: true });
   installLayout(dom, layout);
   if (storage !== null) dom.window.localStorage.setItem(TAB_STORAGE_KEY, String(storage));
   return dom;

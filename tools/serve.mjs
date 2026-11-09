@@ -65,11 +65,24 @@ export function createFixtureServer() {
     if (path === "/") {
       const links = [
         `/chapter/${chapter.id}`,
+        `/slides-viewer`,
         `/api/listing?chapter=${chapter.id}&cursor=0`,
         `/api/status/doc-1`,
         `/slides/1.png`,
       ].map((href) => `<li><a href="${href}">${href}</a></li>`);
       sendText(res, 200, `<!doctype html><meta charset="utf-8"><h1>合成站点</h1><ul>${links.join("")}</ul>`, "text/html; charset=utf-8");
+      return;
+    }
+
+    // 幻灯片预览页：只有页面里已经加载了图片，序列识别才有东西可数。
+    // Slide viewer: sequence detection needs images that the page actually references.
+    if (path === "/slides-viewer") {
+      const images = Array.from(
+        { length: slides.count },
+        (_, index) => `<img src="/slides/${index + 1}.png" alt="第 ${index + 1} 页" width="320" height="180">`,
+      ).join("");
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>幻灯片预览</title></head><body><h1>幻灯片预览</h1><div>${images}</div></body></html>`;
+      sendText(res, 200, html, "text/html; charset=utf-8");
       return;
     }
 

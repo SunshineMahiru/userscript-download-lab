@@ -110,6 +110,16 @@ try {
     const response = await fetch(`${base}/slides/7.png`);
     assert.equal(response.status, 404);
   });
+
+  await check("预览页引用全部幻灯片图片", async () => {
+    const response = await fetch(`${base}/slides-viewer`);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    const sources = [...html.matchAll(/<img src="([^"]+)"/g)].map((matched) => matched[1]);
+    assert.equal(sources.length, 6);
+    assert.equal(sources[0], "/slides/1.png");
+    assert.equal(sources[5], "/slides/6.png");
+  });
 } finally {
   await new Promise((resolve) => server.close(resolve));
 }

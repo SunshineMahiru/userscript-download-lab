@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { jsPDF } from "jspdf";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { createFixtureServer } from "../tools/serve.mjs";
 import { createNodeTransport } from "../tools/node-transport.mjs";
-import { buildPdf, countByProbe, countSeries, slideAddress } from "../src/slides.js";
+import { buildPdf, countByProbe, countSeries, rasterize, slideAddress } from "../src/slides.js";
 import { ToolkitError } from "../src/errors.js";
 
 let passed = 0;
@@ -86,8 +87,43 @@ try {
     assert.equal(calls, 1, "第一页不存在时应立即返回");
   });
 
-  await check("PDF 写出三页并保持页面尺寸", async () => {
-    const pages = [
+  await check("位图真实解码并重编码为 JPEG", async () => {
+    const bytes = readFileSync(new URL("../fixtures/site/slides/3.png", import.meta.url));
+    const page = await rasterize(new Blob([bytes]), {
+      // 注入解码与画布实现，让重编码这一步真的跑一遍。
+      // Inject decoding and canvas so the re-encode step actually runs.
+      decode: async (blob) => loadImage(Buffer.from(await blob.arrayBuffer())),
+      makeCanvas: (width, height) => createCanvas(width, height),
+    });
+    assert.equal(page.width, 320);
+    assert.equal(page.height, 180);
+    assert.ok(page.dataUrl.startsWith("data:image/jpeg;base64,"), "应重编码为 JPEG");
+    // 只校验编码后的体积位于合理区间：编码器坏掉时要么接近空，要么异常膨胀。
+    // Only the encoded size is checked; a broken encoder yields either near-zero or huge output.
+    const encoded = Buffer.from(page.dataUrl.split(",")[1], "base64").length;
+    assert.ok(encoded > 200 && encoded < 40_000, `编码后 ${encoded} 字节`);
+  });
+
+  await check("序列图片一路合成到 PDF", async () => {
+    const pages = [];
+    for (const index of [1, 2, 3]) {
+      const bytes = readFileSync(new URL(`../fixtures/site/slides/${index}.png`, import.meta.url));
+      pages.push(
+        await rasterize(new Blob([bytes]), {
+          decode: async (blob) => loadImage(Buffer.from(await blob.arrayBuffer())),
+          makeCanvas: (width, height) => createCanvas(width, height),
+        }),
+      );
+    }
+    const pdf = Buffer.from(await buildPdf(jsPDF, pages).arrayBuffer()).toString("latin1");
+    assert.equal((pdf.match(/\/Type\s*\/Page[^s]/g) || []).length, 3);
+    assert.deepEqual(
+      [...pdf.matchAll(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/g)].map((m) => [Number(m[1]), Number(m[2])])[0],
+      [960, 540],
+    );
+  });
+
+  await check("PDF 写出三页并保持页面尺寸", async () => {    const pages = [
       { width: 160, height: 120, dataUrl: dataUrlOf("landscape.jpg") },
       { width: 100, height: 200, dataUrl: dataUrlOf("portrait.jpg") },
       { width: 160, height: 120, dataUrl: dataUrlOf("landscape.jpg") },

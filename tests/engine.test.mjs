@@ -100,6 +100,17 @@ try {
     assert.equal(progress[0].total, picked.length);
   });
 
+  await check("从页面图片识别出幻灯片序列", async () => {
+    const { JSDOM } = await import("jsdom");
+    const html = await fetch(`${origin}/slides-viewer`).then((response) => response.text());
+    const dom = new JSDOM(html, { url: `${origin}/slides-viewer` });
+    const series = adapter.readSeries({ url: `${origin}/slides-viewer`, document: dom.window.document, inlinePayloads: [], entries: [] });
+    assert.ok(series, "应识别出序列");
+    assert.equal(series.count, 6);
+    assert.equal(series.prefix, `${origin}/slides/`);
+    assert.equal(series.extension, "png");
+  });
+
   await check("缺少必需能力时构造引擎即报错", () => {
     const broken = { ...adapter, capabilities: { ...adapter.capabilities, status: false } };
     assert.throws(() => createEngine({ adapter: broken, transport: createNodeTransport() }), /必需能力/);

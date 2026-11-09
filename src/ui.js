@@ -2,6 +2,7 @@
 // Floating panel: presentation and interaction only; business rules come from the caller.
 
 import { KIND_LABEL } from "./filename.js";
+import { createMessages, format } from "./messages.js";
 
 const BRAND_COLOR = "#2f6fd0";
 const TAB_MARGIN = 10;
@@ -72,24 +73,25 @@ function writeStoredRatio(ratio) {
 }
 
 export function mountPanel({ onParse, onDownload, onPdf }) {
+  const messages = createMessages();
   const root = document.createElement("aside");
   root.id = "udl-root";
   root.innerHTML = `
     <style>${STYLE}</style>
-    <button id="udl-tab" type="button" aria-expanded="false" aria-label="展开实验面板">
-      <span class="udl-tab-text"><span>实</span><span>验</span><span>面</span><span>板</span></span>
+    <button id="udl-tab" type="button" aria-expanded="false" aria-label="${messages.tabLabel}">
+      <span class="udl-tab-text">${messages.tabChars.map((char) => `<span>${char}</span>`).join("")}</span>
     </button>
-    <section id="udl-panel" aria-label="实验面板">
-      <div class="udl-head"><span>本章资源</span><small>点击书签收起</small></div>
-      <button id="udl-parse" class="udl-action" type="button">解析本章资源</button>
-      <div class="udl-sub"><span>解析结果</span><span id="udl-count">0 项</span></div>
-      <div id="udl-list"><p class="udl-empty">解析后在此列出本章资源</p></div>
-      <button id="udl-download" class="udl-action udl-download" type="button" disabled>下载选中（0）</button>
+    <section id="udl-panel" aria-label="${messages.panelTitle}">
+      <div class="udl-head"><span>${messages.panelTitle}</span><small>${messages.collapseHint}</small></div>
+      <button id="udl-parse" class="udl-action" type="button">${messages.parse}</button>
+      <div class="udl-sub"><span>${messages.resultLabel}</span><span id="udl-count">${format(messages.countUnit, { count: 0 })}</span></div>
+      <div id="udl-list"><p class="udl-empty">${messages.emptyList}</p></div>
+      <button id="udl-download" class="udl-action udl-download" type="button" disabled>${format(messages.download, { count: 0 })}</button>
       <div class="udl-section">
-        <button id="udl-pdf" class="udl-action" type="button">合成幻灯片 PDF</button>
-        <p id="udl-hint" class="udl-hint">未检测到幻灯片序列</p>
+        <button id="udl-pdf" class="udl-action" type="button">${messages.composePdf}</button>
+        <p id="udl-hint" class="udl-hint">${messages.seriesMissing}</p>
       </div>
-      <p id="udl-status" class="udl-status">只处理当前账号有权访问的资源</p>
+      <p id="udl-status" class="udl-status">${messages.initialStatus}</p>
     </section>
   `;
   document.documentElement.appendChild(root);
@@ -116,12 +118,14 @@ export function mountPanel({ onParse, onDownload, onPdf }) {
     const list = root.querySelector("#udl-list");
     const count = root.querySelector("#udl-count");
     const button = root.querySelector("#udl-download");
-    count.textContent = `${resources.length} 项`;
+    count.textContent = format(messages.countUnit, { count: resources.length });
     button.disabled = busy || selected().length === 0;
-    button.textContent = busy ? "下载中…" : `下载选中（${selected().length}）`;
+    button.textContent = busy
+      ? messages.downloading
+      : format(messages.download, { count: selected().length });
 
     if (!resources.length) {
-      list.innerHTML = '<p class="udl-empty">解析后在此列出本章资源</p>';
+      list.innerHTML = `<p class="udl-empty">${messages.emptyList}</p>`;
       return;
     }
     list.innerHTML = resources
@@ -146,8 +150,10 @@ export function mountPanel({ onParse, onDownload, onPdf }) {
     const button = root.querySelector("#udl-pdf");
     const hint = root.querySelector("#udl-hint");
     button.disabled = pdfBusy;
-    button.textContent = pdfBusy ? "合成中…" : "合成幻灯片 PDF";
-    hint.textContent = series ? `已找到幻灯片序列，至少 ${series.count} 页` : "未检测到幻灯片序列";
+    button.textContent = pdfBusy ? messages.composing : messages.composePdf;
+    hint.textContent = series
+      ? format(messages.seriesFound, { count: series.count })
+      : messages.seriesMissing;
   }
 
   function setOpen(next) {

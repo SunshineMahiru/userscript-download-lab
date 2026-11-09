@@ -2,6 +2,7 @@
 // Transport separates how a request is sent from what is requested. See docs/adr/0002.
 
 import { ToolkitError, managerError } from "./errors.js";
+import { createMessages } from "./messages.js";
 
 // 脚本管理器把接口注入脚本作用域，不一定挂在页面 window 上，因此默认从 globalThis 取，
 // 同时接受显式传入的作用域，便于测试替换。
@@ -13,13 +14,14 @@ function resolveApi(scope, name) {
 }
 
 export function createManagerTransport(scope = globalThis) {
+  const messages = createMessages();
   const xmlhttpRequest = resolveApi(scope, "GM_xmlhttpRequest");
   const managerDownload = resolveApi(scope, "GM_download");
 
   // 缺少请求能力时立刻抛出，不做退让。
   // Fail at once when the manager lacks request capability.
   if (typeof xmlhttpRequest !== "function") {
-    throw new ToolkitError("transport-missing", "脚本管理器没有提供 GM_xmlhttpRequest", "启用该接口后刷新页面。");
+    throw new ToolkitError("transport-missing", messages.transportMissingRequest, messages.transportMissingRequestHint);
   }
 
   return {
@@ -32,15 +34,15 @@ export function createManagerTransport(scope = globalThis) {
           responseType: spec.responseType || "text",
           timeout: spec.timeout || 30_000,
           onload: (response) => resolve({ status: response.status, body: response.response }),
-          onerror: () => reject(new ToolkitError("network", "网络请求失败", "检查网络连接后重试。")),
-          ontimeout: () => reject(new ToolkitError("timeout", "请求超时", "稍后重试。")),
+          onerror: () => reject(new ToolkitError("network", messages.networkFailed, messages.networkFailedHint)),
+          ontimeout: () => reject(new ToolkitError("timeout", messages.requestTimeout, messages.requestTimeoutHint)),
         });
       });
     },
 
     download(spec) {
       if (typeof managerDownload !== "function") {
-        throw new ToolkitError("not_enabled", "脚本管理器没有提供 GM_download", "在管理器里启用下载权限后刷新页面。");
+        throw new ToolkitError("not_enabled", messages.transportMissingDownload, messages.transportMissingDownloadHint);
       }
       return new Promise((resolve, reject) => {
         managerDownload({
@@ -51,7 +53,7 @@ export function createManagerTransport(scope = globalThis) {
           timeout: spec.timeout || 180_000,
           onload: () => resolve(),
           onerror: (info) => reject(managerError(info)),
-          ontimeout: () => reject(new ToolkitError("timeout", "下载超时", "资源较大或网络不稳定，稍后重试。")),
+          ontimeout: () => reject(new ToolkitError("timeout", messages.downloadTimeout, messages.downloadTimeoutHint)),
         });
       });
     },
