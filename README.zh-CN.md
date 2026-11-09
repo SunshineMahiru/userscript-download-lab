@@ -105,6 +105,40 @@ npm run build          # 重新生成 userscript-download-lab.user.js
 
 产物那条测试会重新构建一次，再跟仓库里的文件逐字节比对。改了源码忘记重建，测试直接失败。CI 在每次推送和 PR 时跑 `npm ci` 与 `npm test`。
 
+## 真机验证
+
+上面那套测试跑在 Node 里，回答不了「装进真实脚本管理器还能不能用」——管理器把它自己的接口注入到一个 Node 没有的作用域里。这七张截图来自 Chrome + Tampermonkey 5.5.0 对本合成站点的实测，未经裁剪。
+
+有四个缺陷只在真机上暴露：`GM_*` 不在 `window` 也不在 `globalThis` 上、`GM_download` 查 `@connect` 而同源 `GM_xmlhttpRequest` 不查、相对地址的跳转会让主机校验失效、管理器对 4xx 返回的是状态短语而不是内部码。四个都已修，各有回归测试或在 [`docs/manual-check.md`](docs/manual-check.md) 里留了记录。
+
+**1. 面板挂载**
+
+<p align="center"><img src="docs/screenshots/01-chapter-mount.png" alt="章节页左侧只有一个书签，面板处于收起状态"></p>
+
+**2. 解析出五项资源**
+
+<p align="center"><img src="docs/screenshots/02-parse-result.png" alt="列表五项，状态行绿色显示已解析五项"></p>
+
+**3. 按钮跟着勾选变，计数不跟着变**
+
+<p align="center"><img src="docs/screenshots/03-selection.png" alt="取消一项后按钮显示四，列表计数仍为五"></p>
+
+**4. 批量下载记录失败但不中断**
+
+<p align="center"><img src="docs/screenshots/04-download-result.png" alt="两项失败，三个文件已交给浏览器"></p>
+
+**5. 序列在点击之前就已被识别**
+
+<p align="center"><img src="docs/screenshots/05-series-detected.png" alt="面板挂载时提示至少六页"></p>
+
+**6. 六张幻灯片合成一份 PDF**
+
+<p align="center"><img src="docs/screenshots/06-pdf-composed.png" alt="六页合成完成，体积以 KB 显示"></p>
+
+**7. 非章节页会明说**
+
+<p align="center"><img src="docs/screenshots/07-not-chapter.png" alt="红色状态行说明当前页面不是章节页"></p>
+
 ## 实验记录
 
 | 篇目 | 结果 |

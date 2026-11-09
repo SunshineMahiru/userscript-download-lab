@@ -103,6 +103,40 @@ The interface has no reserved members. Anything the engine cannot drive is simpl
 
 The artifact test rebuilds the bundle and compares it byte for byte with the tracked file, so a source change without a rebuild fails the suite. CI runs `npm ci` and `npm test` on every push and pull request.
 
+## Verification in a real manager
+
+The suite above runs in Node. It cannot tell you whether the script survives a real script manager, because a manager injects its APIs into a scope Node does not have. These seven screenshots come from Chrome with Tampermonkey 5.5.0 against the fixture site, unedited.
+
+Four defects only appeared at this stage: `GM_*` are not on `window` or `globalThis`, `GM_download` checks `@connect` while `GM_xmlhttpRequest` does not, a relative redirect breaks host checking, and the manager reports HTTP status phrases instead of its own codes. All four are fixed, and each has a regression test or a note in [`docs/manual-check.md`](docs/manual-check.md).
+
+**1. The panel mounts**
+
+<p align="center"><img src="docs/screenshots/01-chapter-mount.png" alt="Collapsed tab on the left edge of the chapter page"></p>
+
+**2. Parsing returns five resources**
+
+<p align="center"><img src="docs/screenshots/02-parse-result.png" alt="Five resources listed with a green status line"></p>
+
+**3. The download button follows the checkboxes, the count does not**
+
+<p align="center"><img src="docs/screenshots/03-selection.png" alt="One item unchecked, button reads four while the count still reads five"></p>
+
+**4. Batch download records failures and keeps going**
+
+<p align="center"><img src="docs/screenshots/04-download-result.png" alt="Two failures reported, three files handed to the browser"></p>
+
+**5. The series is detected before anything is clicked**
+
+<p align="center"><img src="docs/screenshots/05-series-detected.png" alt="Hint reads at least six pages at mount time"></p>
+
+**6. Six slides become one PDF**
+
+<p align="center"><img src="docs/screenshots/06-pdf-composed.png" alt="Six pages composed, size reported in kilobytes"></p>
+
+**7. A non-chapter page says so**
+
+<p align="center"><img src="docs/screenshots/07-not-chapter.png" alt="Red status line explaining the page is not a chapter"></p>
+
 ## Experiments
 
 | Record | Headline result |
