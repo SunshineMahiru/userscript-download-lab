@@ -96,6 +96,11 @@ export function boot() {
 
     onPdf() {
       guard(panel, async () => {
+        // 序列能力是可选的，缺失时说明不可用即可，不把它当成异常路径。
+        // Series support is optional; when absent, say so instead of failing hard.
+        if (!adapter.capabilities.series || typeof adapter.readSeries !== "function") {
+          throw new ToolkitError("capability-missing", "该适配器不支持幻灯片序列", "只能下载列表里的资源。");
+        }
         const series = adapter.readSeries(collectContext());
         if (!series) {
           throw new ToolkitError("series-missing", "当前页面没有幻灯片序列", "该章节可能使用文档或视频阅览器。");

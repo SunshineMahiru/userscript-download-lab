@@ -805,6 +805,9 @@
       },
       onPdf() {
         guard(panel, async () => {
+          if (!adapter.capabilities.series || typeof adapter.readSeries !== "function") {
+            throw new ToolkitError("capability-missing", "该适配器不支持幻灯片序列", "只能下载列表里的资源。");
+          }
           const series = adapter.readSeries(collectContext());
           if (!series) {
             throw new ToolkitError("series-missing", "当前页面没有幻灯片序列", "该章节可能使用文档或视频阅览器。");
