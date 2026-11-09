@@ -29,7 +29,7 @@ const TABLES = {
     countingPages: "正在统计页数…",
     composingPage: "正在合成 {page}/{total}",
     writingPdf: "正在写入 PDF…",
-    pdfSaved: "已保存 {total} 页，约 {size} MB。",
+    pdfSaved: "已保存 {total} 页，约 {size}。",
 
     downloadFailed: "下载失败：{code}",
     requestFailed: "请求失败：HTTP {status}",
@@ -106,7 +106,7 @@ const TABLES = {
     countingPages: "Counting pages…",
     composingPage: "Composing {page}/{total}",
     writingPdf: "Writing the PDF…",
-    pdfSaved: "Saved {total} pages, about {size} MB.",
+    pdfSaved: "Saved {total} pages, about {size}.",
 
     downloadFailed: "Download failed: {code}",
     requestFailed: "Request failed: HTTP {status}",

@@ -27,6 +27,14 @@ function collectContext() {
   };
 }
 
+// 不足 1 MB 时按 KB 显示：夹具里的幻灯片合成后不到 20 KB，
+// 统一按兆字节保留一位小数会显示成「0.0 MB」，看着像没写出内容。
+// Switch to KB below 1 MB; the fixture slides total under 20 KB and "0.0 MB" reads as broken.
+function formatSize(bytes) {
+  if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
 function jsPdfNamespace() {
   const namespace = typeof jspdf !== "undefined" ? jspdf : window.jspdf;
   if (!namespace || typeof namespace.jsPDF !== "function") {
@@ -151,7 +159,7 @@ export function boot() {
           const pdfBlob = buildPdf(jsPdfNamespace(), pages);
           saveBlob(pdfBlob, sanitizeFileName(document.title || "章节", "", "pdf"));
           panel.setStatus(
-            format(messages.pdfSaved, { total, size: (pdfBlob.size / 1048576).toFixed(1) }),
+            format(messages.pdfSaved, { total, size: formatSize(pdfBlob.size) }),
             "success",
           );
         } finally {
