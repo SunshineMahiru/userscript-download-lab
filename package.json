@@ -1,0 +1,16 @@
+{
+  "name": "userscript-download-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "与具体站点无关的用户脚本工程实验：适配器接口、下载引擎、合成站点与三层测试。",
+  "type": "module",
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "test": "node tests/server.test.mjs && node tests/filename.test.mjs && node tests/engine.test.mjs",
+    "test:legacy": "node tests/pure.test.mjs && node tests/pdf.test.mjs && node tests/ui.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^31.0.0",
+    "jspdf": "4.2.1"
+  }
+}
