@@ -4,6 +4,9 @@
   "private": true,
   "description": "与具体站点无关的用户脚本工程实验：适配器接口、下载引擎、合成站点与三层测试。",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "node tools/build.mjs",
     "serve": "node tools/serve.mjs",
