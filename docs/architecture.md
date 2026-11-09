@@ -53,9 +53,7 @@
 
 | 成员 | 启用条件 | 缺失时的行为 |
 | --- | --- | --- |
-| `parseMedia(payload, ref)` | `capabilities.media` | 只按 `parseStatus` 给出的单一地址处理，不列多码率 |
 | `readSeries(context)` | `capabilities.series` | 幻灯片合成入口不可用，面板提示「未检测到序列」 |
-| `probeAuth(payload)` | `capabilities.authProbe` | 登录态过期只能靠 HTTP 状态码间接判断 |
 | `parseListing` 返回 `nextCursor` | `capabilities.paging` | 只取第一页 |
 
 ### 上下文对象
@@ -84,9 +82,7 @@ capabilities = {
   listing: boolean,    // 必为 true
   paging: boolean,     // 列表分页
   status: boolean,     // 单资源状态查询，必为 true
-  media: boolean,      // 视频与音频的多码率或分片
   series: boolean,     // 幻灯片图片序列
-  authProbe: boolean,  // 登录态探测
 }
 ```
 
@@ -118,14 +114,6 @@ Resource = {
   mimeType: string,     // 由地址后缀推断，推断不出时为 application/octet-stream
   kind: "pdf" | "ppt" | "word" | "sheet" | "video" | "audio" | "archive" | "file",
   expiresAt?: number,   // 过期时间戳，毫秒；未知时缺省
-}
-
-// 媒体变体，parseMedia 可选返回
-MediaVariant = {
-  url: string,
-  mimeType: string,
-  delivery: "direct" | "playlist" | "segment",  // 直链、清单、单分片
-  bandwidth?: number,
 }
 
 // 幻灯片序列
@@ -186,7 +174,7 @@ ExportOutcome = {
 | 302 跳转到带签名的地址 | 验证重定向跟随 |
 | 签名过期返回 403 | 验证 `expired` 分类 |
 | 递增命名的图片序列 | 验证 `readSeries` 与页数探测 |
-| 视频清单地址 | 验证 `parseMedia` 与 `delivery: "playlist"` |
+| 视频清单地址 | 验证清单被当作普通文件下载，内容类型为 `application/vnd.apple.mpegurl` |
 
 ## 九、不做什么
 

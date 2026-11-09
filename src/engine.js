@@ -5,17 +5,6 @@ import { ToolkitError, contentError } from "./errors.js";
 import { requestJson, requestText } from "./request.js";
 import { inferKind, sanitizeFileName } from "./filename.js";
 
-// 只实现脚本管理器 match 语义的常用子集：整串匹配，`*` 通配任意字符。
-// Implements the common subset of match semantics: whole-string match, `*` as wildcard.
-export function patternMatches(pattern, url) {
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");
-  return new RegExp(`^${escaped}$`).test(url);
-}
-
-export function selectAdapter(adapters, url) {
-  return adapters.find((adapter) => adapter.match.some((pattern) => patternMatches(pattern, url))) || null;
-}
-
 export function createEngine({ adapter, transport }) {
   if (!adapter) {
     throw new ToolkitError("adapter-missing", "当前页面没有可用适配器", "在适配器列表里补齐匹配规则。");

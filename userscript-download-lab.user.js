@@ -299,11 +299,7 @@
         listing: true,
         paging: true,
         status: true,
-        // 合成站点把视频当直链返回，没有多码率或分片清单的解析需求。
-        // The fixture serves videos as direct files; there is no variant or playlist parsing.
-        media: false,
-        series: true,
-        authProbe: false
+        series: true
       },
       readChapter(context) {
         const payload = readChapterPayload(context.inlinePayloads || []);
@@ -363,7 +359,6 @@
   function createManagerTransport(scope = globalThis) {
     const xmlhttpRequest = resolveApi(scope, "GM_xmlhttpRequest");
     const managerDownload = resolveApi(scope, "GM_download");
-    const registerMenuCommand = resolveApi(scope, "GM_registerMenuCommand");
     if (typeof xmlhttpRequest !== "function") {
       throw new ToolkitError("transport-missing", "脚本管理器没有提供 GM_xmlhttpRequest", "启用该接口后刷新页面。");
     }
@@ -398,10 +393,6 @@
             ontimeout: () => reject(new ToolkitError("timeout", "下载超时", "资源较大或网络不稳定，稍后重试。"))
           });
         });
-      },
-      registerMenu(label, handler) {
-        if (typeof registerMenuCommand !== "function") return;
-        registerMenuCommand(label, handler);
       }
     };
   }

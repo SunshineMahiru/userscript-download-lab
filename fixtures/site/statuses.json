@@ -18,5 +18,9 @@
   "exp-1": {
     "ttl": -60,
     "candidates": { "download": "expired.pdf" }
+  },
+  "empty-1": {
+    "ttl": 300,
+    "candidates": {}
   }
 }

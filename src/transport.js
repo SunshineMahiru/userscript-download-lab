@@ -15,7 +15,6 @@ function resolveApi(scope, name) {
 export function createManagerTransport(scope = globalThis) {
   const xmlhttpRequest = resolveApi(scope, "GM_xmlhttpRequest");
   const managerDownload = resolveApi(scope, "GM_download");
-  const registerMenuCommand = resolveApi(scope, "GM_registerMenuCommand");
 
   // 缺少请求能力时立刻抛出，不做退让。
   // Fail at once when the manager lacks request capability.
@@ -55,11 +54,6 @@ export function createManagerTransport(scope = globalThis) {
           ontimeout: () => reject(new ToolkitError("timeout", "下载超时", "资源较大或网络不稳定，稍后重试。")),
         });
       });
-    },
-
-    registerMenu(label, handler) {
-      if (typeof registerMenuCommand !== "function") return;
-      registerMenuCommand(label, handler);
     },
   };
 }

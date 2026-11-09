@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createFixtureServer } from "../tools/serve.mjs";
 import { createNodeTransport } from "../tools/node-transport.mjs";
-import { createEngine, selectAdapter } from "../src/engine.js";
+import { createEngine } from "../src/engine.js";
 import { createFixtureAdapter } from "../src/adapters/fixture.js";
 import { ToolkitError } from "../src/errors.js";
 
@@ -33,11 +33,6 @@ async function loadContext(chapterId) {
 const adapter = createFixtureAdapter({ origin });
 
 try {
-  await check("按 match 选中适配器", () => {
-    assert.equal(selectAdapter([adapter], `${origin}/chapter/ch-1`)?.id, "fixture");
-    assert.equal(selectAdapter([adapter], "https://example.invalid/chapter"), null);
-  });
-
   await check("读到章节标识与标题", async () => {
     const engine = createEngine({ adapter, transport: createNodeTransport() });
     const chapter = await engine.readChapter(await loadContext("ch-1"));
