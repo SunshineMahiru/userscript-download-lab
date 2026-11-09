@@ -94,7 +94,7 @@ export function createEngine({ adapter, transport }) {
         await transport.download({ url: item.url, name: item.name, headers: item.headers || {} });
         saved += 1;
       } catch (error) {
-        failures.push({ name: item.name, code: error.code || "error", hint: error.hint || "" });
+        failures.push({ name: item.name, url: item.url, code: error.code || "error", hint: error.hint || "" });
       }
     }
 

@@ -134,7 +134,10 @@ export function createFixtureServer() {
         return;
       }
       const expiresAt = Date.now() + entry.ttl * 1000;
-      sendRedirect(res, `/media/blob/${file}?exp=${expiresAt}&token=${sign(file, expiresAt)}`);
+      // Location 用绝对地址：相对跳转虽合规，但跟随方要按白名单校验目标主机时
+      // 可能解析不出主机名。绝对地址不留这个歧义。
+      // An absolute Location avoids ambiguity for clients that re-check the host.
+      sendRedirect(res, `${origin}/media/blob/${file}?exp=${expiresAt}&token=${sign(file, expiresAt)}`);
       return;
     }
 

@@ -91,6 +91,11 @@ export function boot() {
             return;
           }
           const first = outcome.failed[0];
+          // 面板只放首条原因，逐条细节留给控制台，排查时不用猜是哪一条。
+          // The panel shows the first reason; per-item detail goes to the console.
+          for (const failure of outcome.failed) {
+            console.warn("[下载失败]", failure.name, failure.code, failure.url, failure.hint);
+          }
           panel.setStatus(
             format(messages.downloadSomeFailed, { count: outcome.failed.length, code: first.code, hint: first.hint }),
             "warning",

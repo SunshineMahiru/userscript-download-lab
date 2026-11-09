@@ -58,11 +58,12 @@ try {
     assert.ok(body.expires > Date.now(), "过期时间应晚于当前");
   });
 
-  await check("媒体地址 302 到带签名的地址", async () => {
+  await check("媒体地址 302 到带签名的绝对地址", async () => {
     const response = await fetch(`${base}/media/doc-1.pdf`, { redirect: "manual" });
     assert.equal(response.status, 302);
     const location = response.headers.get("location");
-    assert.match(location, /^\/media\/blob\/doc-1\.pdf\?exp=\d+&token=[0-9a-f]{32}$/);
+    // 绝对地址：跟随方按白名单校验目标主机时不需要再解析相对路径。
+    assert.match(location, /^http:\/\/127\.0\.0\.1:\d+\/media\/blob\/doc-1\.pdf\?exp=\d+&token=[0-9a-f]{32}$/);
   });
 
   await check("签名有效时返回文件并带正确类型", async () => {
@@ -76,7 +77,7 @@ try {
   await check("签名被篡改时返回 403", async () => {
     const redirect = await fetch(`${base}/media/doc-1.pdf`, { redirect: "manual" });
     const location = redirect.headers.get("location").replace(/token=[0-9a-f]{32}/, "token=00000000000000000000000000000000");
-    const response = await fetch(`${base}${location}`);
+    const response = await fetch(location);
     assert.equal(response.status, 403);
     const body = await response.json();
     assert.equal(body.error, "invalid signature");

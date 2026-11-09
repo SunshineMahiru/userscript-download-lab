@@ -387,7 +387,7 @@
           await transport.download({ url: item.url, name: item.name, headers: item.headers || {} });
           saved += 1;
         } catch (error) {
-          failures.push({ name: item.name, code: error.code || "error", hint: error.hint || "" });
+          failures.push({ name: item.name, url: item.url, code: error.code || "error", hint: error.hint || "" });
         }
       }
       return { saved, failed: failures };
@@ -979,6 +979,9 @@
               return;
             }
             const first = outcome.failed[0];
+            for (const failure of outcome.failed) {
+              console.warn("[下载失败]", failure.name, failure.code, failure.url, failure.hint);
+            }
             panel.setStatus(
               format(messages.downloadSomeFailed, { count: outcome.failed.length, code: first.code, hint: first.hint }),
               "warning"
