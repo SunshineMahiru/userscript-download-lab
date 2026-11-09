@@ -47,7 +47,7 @@
       unknownManagerHint: "在控制台查看完整错误对象。",
       managerHints: {
         not_permitted: "脚本管理器未放行该下载域名。在管理器设置里允许访问后重试。",
-        not_whitelisted: "目标域名不在 @connect 声明内。补上声明后重新安装脚本。",
+        not_whitelisted: "目标域名不在 @connect 声明内，或管理器不允许直接下载该类型。播放列表通常属于后者。",
         not_supported: "脚本管理器不支持该资源类型。分片清单通常无法作为单文件下载。",
         not_found: "服务器返回 404，资源可能已被移除。",
         forbidden: "服务器拒绝访问，登录状态可能已过期。",
@@ -122,7 +122,7 @@
       unknownManagerHint: "Check the console for the full error object.",
       managerHints: {
         not_permitted: "The manager blocks this download host. Allow it in the manager settings and retry.",
-        not_whitelisted: "The host is missing from the @connect list. Add it and reinstall the script.",
+        not_whitelisted: "The host is missing from @connect, or the manager refuses this resource type. Playlists usually fall in the second case.",
         not_supported: "The manager does not support this resource type. Segment playlists usually cannot be saved as one file.",
         not_found: "The server returned 404; the resource may be gone.",
         forbidden: "The server refused access; the session may have expired.",
@@ -939,6 +939,17 @@
     }
     return namespace.jsPDF;
   }
+  function createSeriesProbe(adapter) {
+    return function probeSeries() {
+      if (!adapter.capabilities.series || typeof adapter.readSeries !== "function") return null;
+      try {
+        return adapter.readSeries(collectContext());
+      } catch (error) {
+        console.warn("[序列探测失败]", error);
+        return null;
+      }
+    };
+  }
   function guard(panel, action) {
     Promise.resolve().then(action).catch((error) => {
       console.error("[用户脚本下载实验]", error);
@@ -952,6 +963,7 @@
     const adapter = createFixtureAdapter({ origin: FIXTURE_ORIGIN });
     const transport = createManagerTransport();
     const engine = createEngine({ adapter, transport });
+    const probeSeries = createSeriesProbe(adapter);
     let resources = [];
     let panel;
     panel = mountPanel({
@@ -963,6 +975,7 @@
             const { items, failures } = await engine.resolveAll(collectContext());
             resources = items.map((item) => ({ ...item, selected: true }));
             panel.setResources(resources);
+            panel.setSeries(probeSeries());
             if (failures.length) {
               panel.setStatus(format(messages.parsedSome, { ok: items.length, failed: failures.length }), "warning");
             } else {
@@ -1004,7 +1017,7 @@
           if (!adapter.capabilities.series || typeof adapter.readSeries !== "function") {
             throw new ToolkitError("capability-missing", messages.seriesUnsupported, messages.seriesUnsupportedHint);
           }
-          const series = adapter.readSeries(collectContext());
+          const series = probeSeries();
           if (!series) {
             throw new ToolkitError("series-missing", messages.notASeries, messages.notASeriesHint);
           }
@@ -1034,6 +1047,7 @@
         });
       }
     });
+    panel.setSeries(probeSeries());
   }
   boot();
 })();

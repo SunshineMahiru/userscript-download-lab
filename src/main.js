@@ -35,6 +35,21 @@ function jsPdfNamespace() {
   return namespace.jsPDF;
 }
 
+// 序列探测单独抽出来：挂载时先探一次，页面里本来就有图片的话提示立刻准确，
+// 不必等用户点一次「合成」才发现有序列。
+// Probe separately so the hint is right at mount time instead of after the first click.
+function createSeriesProbe(adapter) {
+  return function probeSeries() {
+    if (!adapter.capabilities.series || typeof adapter.readSeries !== "function") return null;
+    try {
+      return adapter.readSeries(collectContext());
+    } catch (error) {
+      console.warn("[序列探测失败]", error);
+      return null;
+    }
+  };
+}
+
 function guard(panel, action) {
   Promise.resolve()
     .then(action)
@@ -52,6 +67,7 @@ export function boot() {
   const adapter = createFixtureAdapter({ origin: FIXTURE_ORIGIN });
   const transport = createManagerTransport();
   const engine = createEngine({ adapter, transport });
+  const probeSeries = createSeriesProbe(adapter);
 
   let resources = [];
   let panel;
@@ -65,6 +81,7 @@ export function boot() {
           const { items, failures } = await engine.resolveAll(collectContext());
           resources = items.map((item) => ({ ...item, selected: true }));
           panel.setResources(resources);
+          panel.setSeries(probeSeries());
           if (failures.length) {
             panel.setStatus(format(messages.parsedSome, { ok: items.length, failed: failures.length }), "warning");
           } else {
@@ -113,7 +130,7 @@ export function boot() {
         if (!adapter.capabilities.series || typeof adapter.readSeries !== "function") {
           throw new ToolkitError("capability-missing", messages.seriesUnsupported, messages.seriesUnsupportedHint);
         }
-        const series = adapter.readSeries(collectContext());
+        const series = probeSeries();
         if (!series) {
           throw new ToolkitError("series-missing", messages.notASeries, messages.notASeriesHint);
         }
@@ -143,6 +160,10 @@ export function boot() {
       });
     },
   });
+
+  // 挂载后立刻探一次：图片已经在页面里的情况下，提示不该还写着「未检测到序列」。
+  // Probe right after mounting so the hint does not lie when images are already present.
+  panel.setSeries(probeSeries());
 }
 
 boot();

@@ -5,7 +5,7 @@ import { ToolkitError, managerError } from "./errors.js";
 import { createMessages } from "./messages.js";
 
 // 脚本管理器把接口注入脚本作用域：既不在 window 上，也不在 globalThis 上，
-// 只有直接引用标识符才取得到。scope 供测试注入，标识符才是真实沙箱里的落点。
+// 只有直接引用标识符才取得到。scope 供测试注入，标识符才是真实沙箱里的位置。
 // Managers inject these into the script scope — neither on window nor on globalThis.
 // Only a direct identifier reference reaches them; scope exists for tests.
 const SANDBOX_APIS = {
