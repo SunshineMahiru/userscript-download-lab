@@ -2,19 +2,23 @@
 // Build: bundle src modules into one .user.js with the metadata block on top.
 
 import { build } from "esbuild";
-import { mkdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { META } from "../src/meta.js";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-export const ARTIFACT = join(root, "dist", "userscript-download-lab.user.js");
 
-export async function buildUserscript() {
-  mkdirSync(dirname(ARTIFACT), { recursive: true });
+// 产物放在仓库根目录并纳入版本库：脚本管理器与 jsDelivr 都按仓库路径取文件，
+// 放进被忽略的目录会让 @updateURL 指向一个取不到东西的地址。
+// The artifact lives at the repository root and is tracked: managers and jsDelivr fetch
+// it by repository path, so an ignored directory would make @updateURL dead.
+export const ARTIFACT = join(root, "userscript-download-lab.user.js");
+
+export async function buildUserscript(outfile = ARTIFACT) {
   await build({
     entryPoints: [join(root, "src", "main.js")],
-    outfile: ARTIFACT,
+    outfile,
     bundle: true,
     format: "iife",
     platform: "browser",
@@ -24,7 +28,7 @@ export async function buildUserscript() {
     legalComments: "none",
     logLevel: "silent",
   });
-  return ARTIFACT;
+  return outfile;
 }
 
 const invokedDirectly = Boolean(process.argv[1]) && process.argv[1].replaceAll("\\", "/").endsWith("tools/build.mjs");
