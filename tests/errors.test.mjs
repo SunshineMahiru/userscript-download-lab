@@ -1,3 +1,4 @@
+import "./helpers/locale.mjs";
 import assert from "node:assert/strict";
 import { createFixtureServer } from "../tools/serve.mjs";
 import { createEngine } from "../src/engine.js";
