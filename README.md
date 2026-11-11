@@ -7,7 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://github.com/SunshineMahiru/userscript-download-lab/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/SunshineMahiru/userscript-download-lab/test.yml?branch=main&label=tests" alt="Test workflow status"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/github/package-json/v/SunshineMahiru/userscript-download-lab?label=version" alt="Version"></a>
+  <img src="https://img.shields.io/badge/node-%3E%3D20-blue" alt="Node 20 or newer">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
 ## What this is

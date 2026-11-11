@@ -7,7 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="许可证 MIT"></a>
+  <a href="https://github.com/SunshineMahiru/userscript-download-lab/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/SunshineMahiru/userscript-download-lab/test.yml?branch=main&label=tests" alt="测试工作流状态"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/github/package-json/v/SunshineMahiru/userscript-download-lab?label=version" alt="版本"></a>
+  <img src="https://img.shields.io/badge/node-%3E%3D20-blue" alt="需要 Node 20 以上">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="许可证 MIT"></a>
 </p>
 
 ## 这是什么
