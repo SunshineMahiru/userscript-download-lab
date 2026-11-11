@@ -14,12 +14,16 @@ const HOME = `https://github.com/${REPO}`;
 // 缺了它下载会以 not_whitelisted 失败。
 // @connect must be explicit: same-origin GM_xmlhttpRequest is exempt, but GM_download checks
 // the whitelist and fails with not_whitelisted without it.
+// 匹配范围不写端口：match pattern 里端口本来就不参与匹配，写死 8080 只会在
+// 端口被占用时把人挡住（Steam 的 CEF 调试端口常年占着 8080）。
+// No port in @match: match patterns ignore the port anyway, and pinning 8080 only
+// blocks you when something else already holds it.
 export const META = `// ==UserScript==
 // @name         用户脚本下载实验
 // @namespace    ${HOME}
 // @version      ${VERSION}
 // @description  在合成站点上实验用户脚本的取址与下载可靠性；仓库不含任何真实站点实现。
-// @match        http://127.0.0.1:8080/*
+// @match        http://127.0.0.1/*
 // @run-at       document-idle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_download

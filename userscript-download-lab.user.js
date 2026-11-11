@@ -3,7 +3,7 @@
 // @namespace    https://github.com/SunshineMahiru/userscript-download-lab
 // @version      1.0.0
 // @description  在合成站点上实验用户脚本的取址与下载可靠性；仓库不含任何真实站点实现。
-// @match        http://127.0.0.1:8080/*
+// @match        http://127.0.0.1/*
 // @run-at       document-idle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_download

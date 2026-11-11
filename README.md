@@ -14,7 +14,7 @@
 
 A userscript that resolves chapter resources — documents, videos, slide image sequences — and hands them to the script manager's downloader. Everything it knows about a site lives in a small adapter; the engine itself has no site knowledge.
 
-The repository ships one adapter, and it only matches `http://127.0.0.1:8080/*`, which is the synthetic site included in `fixtures/`. There is no adapter for any real platform here. When no adapter is supplied, the engine refuses to start with a message saying so rather than failing silently.
+The repository ships one adapter, and it only matches `http://127.0.0.1/*`, which is the synthetic site included in `fixtures/`. There is no adapter for any real platform here. When no adapter is supplied, the engine refuses to start with a message saying so rather than failing silently.
 
 The point is the engineering, not the tool: a documented interface, a fixture-driven test suite, and six written-up experiments with numbers you can reproduce.
 
@@ -68,7 +68,7 @@ The repository already contains a built `userscript-download-lab.user.js`, so `n
 
 Install that file in a manager that provides `GM_xmlhttpRequest` and `GM_download` — Tampermonkey, ScriptCat and Violentmonkey all do — then open `http://127.0.0.1:8080/chapter/ch-1`. A panel appears on the left edge: parse the chapter to list five resources, select the ones you want, download them, or compose the slide sequence into a PDF.
 
-`npm run serve` and `npm run build` run in separate shells; the script only matches port 8080, so the fixture server must be on that port.
+`npm run serve` and `npm run build` run in separate shells. The server listens on 8080 by default; set `PORT` to move it, and the script follows, because its match pattern carries no port.
 
 ## Adapter interface
 

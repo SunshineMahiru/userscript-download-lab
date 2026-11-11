@@ -61,7 +61,7 @@ check("元数据块只出现一次", () => {
 });
 
 check("元数据声明了匹配范围、仓库地址与依赖", () => {
-  assert.match(text, /\/\/ @match\s+http:\/\/127\.0\.0\.1:8080\/\*/);
+  assert.match(text, /\/\/ @match\s+http:\/\/127\.0\.0\.1\/\*/);
   assert.match(text, /\/\/ @namespace\s+https:\/\/github\.com\/SunshineMahiru\/userscript-download-lab/);
   assert.match(text, /\/\/ @homepageURL\s+https:\/\/github\.com\/SunshineMahiru\/userscript-download-lab/);
   assert.match(text, /\/\/ @supportURL\s+https:\/\/github\.com\/SunshineMahiru\/userscript-download-lab\/issues/);

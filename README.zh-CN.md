@@ -7,14 +7,14 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="许可证 MIT"></a>
 </p>
 
 ## 这是什么
 
 一个用户脚本，把章节里的文档、视频、幻灯片图片序列解析出来，交给脚本管理器去下载。它关于某个站点的全部知识都放在一个小适配器里，引擎自己不知道站点长什么样。
 
-仓库只带一个适配器，而且只匹配 `http://127.0.0.1:8080/*`，也就是 `fixtures/` 里那个合成站点。没有任何真实平台的适配器。缺少适配器时引擎会明确报错并说明原因，不会静默失败。
+仓库只带一个适配器，而且只匹配 `http://127.0.0.1/*`，也就是 `fixtures/` 里那个合成站点。没有任何真实平台的适配器。缺少适配器时引擎会明确报错并说明原因，不会静默失败。
 
 重点在工程，不在工具。一份写清楚的接口定义、一套夹具驱动的测试、六篇能复跑出数字的实验记录，这三样是仓库的主要内容。
 
@@ -70,7 +70,7 @@ npm run build          # 重新生成 userscript-download-lab.user.js
 
 把它装进支持 `GM_xmlhttpRequest` 与 `GM_download` 的管理器——Tampermonkey、ScriptCat、Violentmonkey 都行——然后打开 `http://127.0.0.1:8080/chapter/ch-1`。左侧会出现一个面板，点解析会列出五项资源，勾选后能下载，也能把幻灯片序列合成一份 PDF。
 
-`serve` 和 `build` 开两个终端跑。脚本只匹配 8080 端口，合成站点必须在这个端口上。
+`serve` 和 `build` 开两个终端跑。服务默认监听 8080，设 `PORT` 可以换端口，脚本跟着走——匹配范围里本来就没有端口。
 
 ## 适配器接口
 
