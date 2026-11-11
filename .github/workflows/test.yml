@@ -23,9 +23,10 @@ jobs:
       # 产物与源码的逐字节校验在测试内完成，忘记重建会让这一步失败。
       # The byte-level artifact check runs inside the suite; a missed rebuild fails here.
       - run: npm test
-      # 失败时把 FAIL 行与随后几行折成注解，便于在没有日志权限的地方定位。
-      # On failure, fold the FAIL lines into annotations so they are readable without
-      # download access to the job log.
+      # 失败时把 FAIL 行与随后几行折成注解。本机读不到 Actions 日志，
+      # 注解是唯一能离线看到失败原因的地方，因此长期保留。
+      # On failure, fold the FAIL lines into annotations. This machine cannot read job
+      # logs, so annotations are the only place the reason is visible; it stays.
       - name: Diagnose failing tests
         if: failure()
         run: |
